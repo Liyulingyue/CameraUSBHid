@@ -85,14 +85,14 @@ def draw_poses(img, poses, point_score_threshold=0.5, skeleton=default_skeleton)
     cv2.addWeighted(img, 0.4, img_limbs, 0.6, 0, dst=img)
     return img
 
-def create_model(model_path = "./human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml"):
+def create_model(model_path = "./human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml", device="CPU"):
     # model_path = "./human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml"
     # Initialize OpenVINO Runtime
     ie_core = Core()
     model = ie_core.read_model(model_path)
     # Let the AUTO device decide where to load the model (you can use CPU, GPU or MYRIAD as well).
     # compiled_model = ie_core.compile_model(model=model, device_name="CPU", config={"PERFORMANCE_HINT": "LATENCY"})
-    compiled_model = ie_core.compile_model(model=model, device_name="CPU")
+    compiled_model = ie_core.compile_model(model=model, device_name=device)
 
     # Get the input and output names of nodes.
     input_layer = compiled_model.input(0)
