@@ -5,7 +5,7 @@ from Tools.utils import create_model, model_predict, draw_poses
 
 if __name__ == '__main__':
     decoder = OpenPoseDecoder()
-    model_infor = create_model("Models/human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml", "GPU")
+    model_infor = create_model("Models/human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml", "CPU")
     frame = cv2.imread('example.jpg')
     poses = model_predict(frame, model_infor, decoder)
     # print(poses)
