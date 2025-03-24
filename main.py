@@ -1,7 +1,7 @@
 import cv2
 
-from Tools.decoder import OpenPoseDecoder
-from Tools.utils import create_model, model_predict, draw_poses
+from Tools.ov.decoder import OpenPoseDecoder
+from Tools.ov.utils import create_model, model_predict, draw_poses
 
 if __name__ == '__main__':
     decoder = OpenPoseDecoder()

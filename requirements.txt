@@ -1,3 +1,6 @@
 openvino
 numpy
 opencv-python
+
+# only for show
+pyqt5
