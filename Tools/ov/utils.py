@@ -10,6 +10,26 @@ colors = ((255, 0, 0), (255, 0, 255), (170, 0, 255), (255, 0, 85), (255, 0, 170)
 default_skeleton = ((15, 13), (13, 11), (16, 14), (14, 12), (11, 12), (5, 11), (6, 12), (5, 6), (5, 7),
                     (6, 8), (7, 9), (8, 10), (1, 2), (0, 1), (0, 2), (1, 3), (2, 4), (3, 5), (4, 6))
 
+body_mapper = {
+    "nose": 0,
+    "right_eye": 1,
+    "left_eye": 2,
+    "right_ear": 3,
+    "left_ear": 4,
+    "right_shoulder": 5,
+    "left_shoulder": 6,
+    "right_elbow": 7,
+    "left_elbow": 8,
+    "right_wrist": 9,
+    "left_wrist": 10,
+    "right_hip": 11,
+    "left_hip": 12,
+    "right_knee": 13,
+    "left_knee": 14,
+    "right_ankle": 15,
+    "left_ankle": 16
+}
+
 # 2D pooling in numpy (from: https://stackoverflow.com/a/54966908/1624463)
 def pool2d(A, kernel_size, stride, padding, pool_mode="max"):
     """
