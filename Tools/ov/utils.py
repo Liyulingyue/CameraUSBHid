@@ -98,6 +98,7 @@ def draw_poses(img, poses, point_score_threshold=0.5, skeleton=default_skeleton)
         for i, (p, v) in enumerate(zip(points, points_scores)):
             if v > point_score_threshold:
                 cv2.circle(img, tuple(p), 1, colors[i], 2)
+                cv2.putText(img, str(i), tuple(p), cv2.FONT_HERSHEY_SIMPLEX, 0.5, colors[i], 1)
         # Draw limbs.
         for i, j in skeleton:
             if points_scores[i] > point_score_threshold and points_scores[j] > point_score_threshold:

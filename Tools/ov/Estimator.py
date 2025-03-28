@@ -12,5 +12,8 @@ class HumanPoseEstimator():
         return result, draw_img
 
     def pose2dict(self, poses):
-        pose_dict = {key: poses[0, body_mapper[key], :2] for key in body_mapper.keys()}
+        if len(poses) == 0:
+            pose_dict = {}
+        else:
+            pose_dict = {key: poses[0, body_mapper[key], :2] for key in body_mapper.keys()}
         return pose_dict

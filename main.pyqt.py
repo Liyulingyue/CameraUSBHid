@@ -4,10 +4,19 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWid
 from PyQt5.QtGui import QImage, QPixmap, QFont
 from PyQt5.QtCore import QTimer, Qt
 
+from Tools.ov.Estimator import HumanPoseEstimator
+from pose2state import judge_pose
+
+model_path = "Models/human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml"
+device = "CPU"
+estimator = HumanPoseEstimator(model_path, device)
+
 # 假设的图像处理函数，返回一个整数 N
-def process_frame(frame):
-    # 这里可以加入图像处理逻辑，目前仅返回固定值 N
-    return 42  # 示例返回值
+def process_frame(poses):
+    if len(poses) == 0:
+        return ""
+    gesture_list = judge_pose(poses)
+    return "/".join(gesture_list)  # 示例返回值
 
 class CameraApp(QMainWindow):
     def __init__(self):
@@ -28,6 +37,8 @@ class CameraApp(QMainWindow):
         # 右侧：显示处理结果的标签
         self.result_label = QLabel()
         self.result_label.setAlignment(Qt.AlignCenter)
+        self.result_label.setWordWrap(True)  # 启用自动换行
+        self.result_label.setFixedWidth(800)  # 设置固定宽度为800
         font = QFont() # 设置字体大小
         font.setPointSize(50)  # 将字体大小设置为20点
         self.result_label.setFont(font)
@@ -47,15 +58,22 @@ class CameraApp(QMainWindow):
     def update_frame(self):
         ret, frame = self.cap.read()
         if ret:
+            # 反转图像以保持镜像
+            frame = cv2.flip(frame, 1)  # 水平翻转
+            # 调用推理函数进行推理
+            poses, drawed_frame = estimator.infer(frame, True)
+
             # 将OpenCV图像转换为Qt格式
-            rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            rgb_image = cv2.cvtColor(drawed_frame, cv2.COLOR_BGR2RGB)
             h, w, ch = rgb_image.shape
             bytes_per_line = ch * w
             qt_image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
+
             self.camera_label.setPixmap(QPixmap.fromImage(qt_image))
 
             # 处理图像并更新右侧标签
-            result_value = process_frame(frame)
+            pose_dict = estimator.pose2dict(poses)
+            result_value = process_frame(pose_dict)
             self.result_label.setText(f"{result_value}")
 
     def closeEvent(self, event):
