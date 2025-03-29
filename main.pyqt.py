@@ -5,7 +5,7 @@ from PyQt5.QtGui import QImage, QPixmap, QFont
 from PyQt5.QtCore import QTimer, Qt
 
 from Tools.ov.Estimator import HumanPoseEstimator
-from pose2state import judge_pose
+from Tools.posedict2state import posedict2state
 
 model_path = "Models/human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml"
 device = "CPU"
@@ -15,7 +15,7 @@ estimator = HumanPoseEstimator(model_path, device)
 def process_frame(poses):
     if len(poses) == 0:
         return ""
-    gesture_list = judge_pose(poses)
+    gesture_list = posedict2state(poses)
     return "/".join(gesture_list)  # 示例返回值
 
 class CameraApp(QMainWindow):

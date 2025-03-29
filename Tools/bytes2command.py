@@ -1,4 +1,4 @@
-def generate_command(data_list):
+def bytes2command(data_list):
     """
     生成符合指定协议格式的二进制命令包
 
@@ -41,18 +41,18 @@ def generate_command(data_list):
 if __name__ == "__main__":
     # 示例1：发送3字节数据 [0x01, 0x02, 0x03]
     example_data = [0x04]
-    command = generate_command(example_data)
+    command = bytes2command(example_data)
     print("生成命令:", command.hex(' ').upper())
     # 输出: 57 AB 00 82 03 01 02 03 8B
 
     # 示例2：发送空数据
     empty_data = []
-    command = generate_command(empty_data)
+    command = bytes2command(empty_data)
     print("生成命令:", command.hex(' ').upper())
     # 输出: 57 AB 00 82 00 82
 
     # 示例3：边界值测试 (255)
     edge_case = [0xFF]
-    command = generate_command(edge_case)
+    command = bytes2command(edge_case)
     print("生成命令:", command.hex(' ').upper())
     # 输出: 57 AB 00 82 01 FF 82
