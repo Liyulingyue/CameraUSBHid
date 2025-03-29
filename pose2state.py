@@ -1,8 +1,17 @@
 import numpy as np
 
 
-def calculate_distance(point1, point2):
-    return np.linalg.norm(np.array(point1) - np.array(point2))
+def calculate_distance(point1, point2, type='euclidean'):
+    distance = 0
+    if type == 'euclidean':
+        distance = np.linalg.norm(np.array(point1) - np.array(point2))
+    elif type == "x":
+        distance = abs(point1[0] - point2[0])
+    elif type == "y":
+        distance = abs(point1[1] - point2[1])
+    else: # default
+        distance = np.linalg.norm(np.array(point1) - np.array(point2))
+    return distance
 
 
 def judge_pose(keypoints):
@@ -22,6 +31,14 @@ def judge_pose(keypoints):
     # Calculate distance between shoulders
     shoulder_distance = calculate_distance(right_shoulder, left_shoulder)
 
+    # 0. 双手交叉 双手在胸前合上 效果不好
+    if (calculate_distance(right_wrist, right_shoulder, "y") > 0.7 * calculate_distance(right_wrist, right_hip, "y") and
+            calculate_distance(right_wrist, right_hip, "y") > 0.7 * calculate_distance(right_wrist, right_shoulder, "y") and
+            calculate_distance(left_wrist, left_shoulder, "y") > 0.7 * calculate_distance(left_wrist, left_hip, "y") and
+            calculate_distance(left_wrist, left_hip, "y") > 0.7 * calculate_distance(left_wrist, left_shoulder, "y") and
+            calculate_distance(right_wrist, left_wrist) < 0.3 * shoulder_distance):
+        states.append("双手交叉")
+
     # 1. 右手摸左肩膀
     if calculate_distance(right_wrist, left_shoulder) < 0.3 * shoulder_distance:  # 20% of shoulder distance as threshold
         states.append("右手摸左肩膀")
@@ -31,43 +48,52 @@ def judge_pose(keypoints):
         states.append("左手摸右肩膀")
 
     # 3. 右手叉腰 右手在肩膀和胯部的中间位置，且右手肘和肩膀的距离约等于两肩距离的70%以上
-    if (calculate_distance(right_wrist, right_shoulder) > 0.7 * calculate_distance(right_wrist, right_hip) and
-            calculate_distance(right_wrist, right_hip) > 0.7 * calculate_distance(right_wrist, right_shoulder) and
-            right_wrist[0] > right_shoulder[0] and
-            calculate_distance(right_elbow, right_shoulder) > 0.7 * shoulder_distance):
+    if (calculate_distance(right_wrist, right_shoulder, "y") > 0.7 * calculate_distance(right_wrist, right_hip, "y") and
+            calculate_distance(right_wrist, right_hip, "y") > 0.7 * calculate_distance(right_wrist, right_shoulder, "y") and
+            calculate_distance(right_wrist, right_shoulder, "x") < 0.2 * shoulder_distance and
+            calculate_distance(right_wrist, right_elbow) > 0.3 * shoulder_distance):
         states.append("右手叉腰")
 
     # 4. 左手叉腰
-    if (calculate_distance(left_wrist, left_shoulder) > 0.7 * calculate_distance(left_wrist, left_hip) and
-            calculate_distance(left_wrist, left_hip) > 0.7 * calculate_distance(left_wrist, left_shoulder) and
-            left_wrist[0] < left_shoulder[0] and
-            calculate_distance(left_elbow, left_shoulder) > 0.7 * shoulder_distance):
+    if (calculate_distance(left_wrist, left_shoulder, "y") > 0.7 * calculate_distance(left_wrist, left_hip, "y") and
+            calculate_distance(left_wrist, left_hip, "y") > 0.7 * calculate_distance(left_wrist, left_shoulder, "y") and
+            calculate_distance(left_wrist, left_shoulder, "x") < 0.2 * shoulder_distance and
+            calculate_distance(left_wrist, left_elbow) > 0.3 * shoulder_distance):
         states.append("左手叉腰")
 
-    # 5. 双手抱胸 左手腕接近右手肘，右手腕接近左手肘，距离不超过两肩距离的20% 很难触发
-    if (calculate_distance(right_wrist, left_wrist) < 0.3 * shoulder_distance and
-        calculate_distance(left_wrist, right_wrist) < 0.3 * shoulder_distance):
-        states.append("双手抱胸")
-
-    # 7. 右手V 右手肘x轴在手腕和肩膀之间，且右手肘和肩膀y轴差异小于两肩宽度的10%
-    if (abs(right_wrist[0] - right_shoulder[0]) > 0.7 * abs(right_wrist[0] - right_elbow[0]) and
-            abs(right_wrist[0] - right_elbow[0]) > 0.7 * abs(right_wrist[0] - right_shoulder[0]) and
-            abs(right_wrist[1] - right_shoulder[1]) < 0.1 * shoulder_distance):
-        states.append("右手V")
-
-    # 8. 左手V 左手肘x轴在手腕和肩膀之间，且左手肘和肩膀y轴差异小于两肩宽度的10%
-    pass
-
-    # 9. 右手举起 手肘高度小于肩膀，手腕高度高于鼻子
-    if (right_wrist[1] > nose[1] and
-            right_elbow[1] < nose[1]):
+    # 5. 右手举起
+    if (right_wrist[1] < nose[1] and
+            right_elbow[1] > nose[1]):
         states.append("右手举起")
 
-    # 10. 左手举起 手肘高度小于肩膀，手腕高度高于鼻子
+    # 6. 左手举起
     if (left_wrist[1] < nose[1] and
-            left_elbow[1] < nose[1]):
+            left_elbow[1] > nose[1]):
         states.append("左手举起")
 
+    # 7. 右手向右平举
+    if (calculate_distance(right_wrist, right_shoulder, "y") > 0.7 * calculate_distance(right_wrist, right_hip, "y") and
+            calculate_distance(right_wrist, right_hip, "y") > 0.7 * calculate_distance(right_wrist, right_shoulder, "y") and
+            calculate_distance(right_wrist, right_shoulder, "x") > 1 * shoulder_distance):
+        states.append("右手平伸")
+
+    # 8. 左手向左平举
+    if (calculate_distance(left_wrist, left_shoulder, "y") > 0.7 * calculate_distance(left_wrist, left_hip, "y") and
+            calculate_distance(left_wrist, left_hip, "y") > 0.7 * calculate_distance(left_wrist, left_shoulder, "y") and
+            calculate_distance(left_wrist, left_shoulder, "x") > 1 * shoulder_distance):
+        states.append("左手平伸")
+
+    # 9. 右手V 右手和右肩的x轴距离大于两肩距离的70%，并且远离左键，且右手的高度和肩膀的y轴距离小于两肩距离的20%
+    if (calculate_distance(right_wrist, right_shoulder, "x") > 0.7 * shoulder_distance and
+            calculate_distance(right_wrist, left_shoulder, "x") > 1.5 * shoulder_distance and
+            calculate_distance(right_wrist, right_shoulder, "y") < 0.2 * shoulder_distance):
+        states.append("右手V")
+
+    # 10. 左手V 左手和左肩的x轴距离大于两肩距离的70%，并且远离右键，且左手的高度和肩膀的y轴距离小于两肩距离的20%
+    if (calculate_distance(left_wrist, left_shoulder, "x") > 0.7 * shoulder_distance and
+            calculate_distance(left_wrist, right_shoulder, "x") > 1.5 * shoulder_distance and
+            calculate_distance(left_wrist, left_shoulder, "y") < 0.2 * shoulder_distance):
+        states.append("左手V")
 
     return states
 
