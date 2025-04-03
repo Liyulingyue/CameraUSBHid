@@ -4,3 +4,4 @@ opencv-python
 
 # only for show
 pyqt5
+gradio

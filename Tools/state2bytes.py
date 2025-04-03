@@ -10,9 +10,8 @@ words2bytes_dict = {
     'i': 0x0C,
     'o': 0x12,
 }
-def state2bytes(state):
+def state2words(state):
     words_list = []
-    bytes_list = []
 
     # state to list of words
     if 0 in state: # 双手交叉
@@ -42,6 +41,16 @@ def state2bytes(state):
     if 6 in state:
         words_list.append('o') # 取消
 
+    return words_list
+
+def words2bytes(words_list):
     bytes_list = [words2bytes_dict[x] for x in words_list]
 
-    return bytes([int(x) for x in state.split()])
+    return bytes_list
+
+def state2bytes(state):
+    words_list = state2words(state)
+    bytes_list = words2bytes(words_list)
+
+
+    return bytes_list
