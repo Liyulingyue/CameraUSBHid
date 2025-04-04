@@ -1,0 +1,15 @@
+{
+    "8": "LeftHandOnHead",
+    "4": "LeftHandOnHip",
+    "12": "LeftHandOnShoulder",
+    "10": "LeftHandOut",
+    "6": "LeftHandUp",
+    "2": "LeftV",
+    "7": "RightHandOnHead",
+    "3": "RightHandOnHip",
+    "11": "RightHandOnShoulder",
+    "9": "RightHandOut",
+    "5": "RightHandUp",
+    "1": "RightV",
+    "0": "Stand"
+}

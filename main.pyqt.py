@@ -5,12 +5,21 @@ from PyQt5.QtGui import QImage, QPixmap, QFont
 from PyQt5.QtCore import QTimer, Qt
 
 from Tools.bytes2command import bytes2command
-from Tools.ov.Estimator import HumanPoseEstimator
-from Tools.posedict2state import posedict2state
 from Tools.sendcommand import send_commands_timeout as send_command
-from Tools.state2bytes import state2bytes
+# from Tools.posedict2state import posedict2state
+# from Tools.state2bytes import state2bytes
+from Tools.posedict2state_vector import posedict2state
+from Tools.state2bytes_vector import state2bytes
 
-model_path = "Models/human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml"
+# from Tools.ov.Estimator import HumanPoseEstimator
+# model_path = "Models/human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml"
+# device = "CPU"
+# estimator = HumanPoseEstimator(model_path, device)
+
+IF_SEND_COMMAND = False
+
+from Tools.fastdeploy.Estimator import HumanPoseEstimator
+model_path = "Models/tinypose_128x96"
 device = "CPU"
 estimator = HumanPoseEstimator(model_path, device)
 
@@ -21,7 +30,8 @@ def process_frame(poses):
     gesture_list = posedict2state(poses)
     bytes_list = state2bytes(gesture_list)
     command = bytes2command(bytes_list)
-    send_command(server_ip='192.168.2.184', port=80, command=command)
+    if IF_SEND_COMMAND:
+        send_command(server_ip='192.168.2.184', port=80, command=command)
     return "/".join([str(x) for x in gesture_list])  # 示例返回值
 
 class CameraApp(QMainWindow):

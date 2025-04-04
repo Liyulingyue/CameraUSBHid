@@ -44,7 +44,7 @@
     },
     {
         "name": "LeftHandOnShoulder",
-        "index": 10,
+        "index": 12,
         "basekeypoints": "left_shoulder",
         "list_corekeypoints": [
             "left_elbow",

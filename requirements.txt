@@ -1,6 +1,7 @@
-openvino
+openvino<=2023
 numpy
 opencv-python
+fastdeploy-python
 
 # only for show
 pyqt5
