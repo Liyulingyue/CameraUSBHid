@@ -1,4 +1,5 @@
 import json
+import os
 
 import cv2
 import gradio as gr
@@ -49,6 +50,22 @@ def fn_btn_save(img_raw, name, index, basekeypoints, list_corekeypoints):
     cv2.imwrite(f"Source/Images/{name}_{index}.jpg", img_demo)
     json.dump(pose_info, open(f"Source/RawInfo/{name}_{index}.json", 'w'), indent=4)
 
+def fn_btn_generate_config():
+    raw_info_path = "Source/RawInfo"
+    config_path = "Source/configs.json"
+    configs = []
+    for file_name in os.listdir(raw_info_path):
+        if not file_name.endswith(".json"): continue
+        info = json.load(open(os.path.join(raw_info_path, file_name)))
+        configs.append({
+            'name': info['name'],
+            'index': info['index'],
+            'basekeypoints': info['basekeypoints'],
+            'list_corekeypoints': info['list_corekeypoints'],
+            'value_dict': info['value_dict']
+        })
+    json.dump(configs, open(config_path, 'w'), indent=4)
+
 with gr.Blocks() as App:
     gr.Markdown("# 摄像头鼠标调试工具")
     with gr.Tab("鼠标远程控制"):
@@ -69,7 +86,11 @@ with gr.Blocks() as App:
             txt_basekeypoints = gr.Dropdown(label="基准关键点", choices=body_mapper.keys(), interactive=True)
         txt_list_corekeypoints = gr.CheckboxGroup(label="核心关键点", choices=body_mapper.keys())
         btn_save = gr.Button("将姿态信息保存为模板文件(Source/Images[RawInfo])")
+        btn_generate_config = gr.Button("生成配置文件(Source/configs.json)")
 
         btn_detect.click(fn=lambda x: estimator.infer(x, True)[1], inputs=[img_raw], outputs=[img_keypoints])
         btn_save.click(fn=fn_btn_save, inputs=[img_raw, txt_posename, txt_index, txt_basekeypoints, txt_list_corekeypoints], outputs=[])
+        btn_generate_config.click(fn=fn_btn_generate_config, inputs=[], outputs=[])
+
+
 App.launch()

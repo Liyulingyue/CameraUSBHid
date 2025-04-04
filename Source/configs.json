@@ -1,0 +1,250 @@
+[
+    {
+        "name": "LeftHandOnHead",
+        "index": 8,
+        "basekeypoints": "left_shoulder",
+        "list_corekeypoints": [
+            "left_elbow",
+            "left_wrist",
+            "left_eye"
+        ],
+        "value_dict": {
+            "left_elbow": [
+                -95.6089096069336,
+                -22.876571655273438
+            ],
+            "left_wrist": [
+                -6.1168212890625,
+                -107.35348510742188
+            ],
+            "left_eye": [
+                73.0457763671875,
+                -131.6073226928711
+            ]
+        }
+    },
+    {
+        "name": "LeftHandOnHip",
+        "index": 4,
+        "basekeypoints": "left_shoulder",
+        "list_corekeypoints": [
+            "left_elbow",
+            "left_wrist"
+        ],
+        "value_dict": {
+            "left_elbow": [
+                -76.60369873046875,
+                93.453125
+            ],
+            "left_wrist": [
+                -4.2689208984375,
+                159.2177734375
+            ]
+        }
+    },
+    {
+        "name": "LeftHandOnShoulder",
+        "index": 10,
+        "basekeypoints": "left_shoulder",
+        "list_corekeypoints": [
+            "left_elbow",
+            "left_wrist",
+            "right_shoulder"
+        ],
+        "value_dict": {
+            "left_elbow": [
+                7.4216461181640625,
+                81.56442260742188
+            ],
+            "left_wrist": [
+                109.91059875488281,
+                -0.9780426025390625
+            ],
+            "right_shoulder": [
+                172.7346954345703,
+                -5.5809173583984375
+            ]
+        }
+    },
+    {
+        "name": "LeftHandOut",
+        "index": 10,
+        "basekeypoints": "left_shoulder",
+        "list_corekeypoints": [
+            "left_elbow",
+            "left_wrist"
+        ],
+        "value_dict": {
+            "left_elbow": [
+                -64.655517578125,
+                117.84085083007812
+            ],
+            "left_wrist": [
+                -132.79608154296875,
+                54.8519287109375
+            ]
+        }
+    },
+    {
+        "name": "LeftHandUp",
+        "index": 6,
+        "basekeypoints": "left_shoulder",
+        "list_corekeypoints": [
+            "left_elbow",
+            "left_wrist"
+        ],
+        "value_dict": {
+            "left_elbow": [
+                -76.25718688964844,
+                -93.91152954101562
+            ],
+            "left_wrist": [
+                -66.80403137207031,
+                -224.44114685058594
+            ]
+        }
+    },
+    {
+        "name": "LeftV",
+        "index": 2,
+        "basekeypoints": "left_shoulder",
+        "list_corekeypoints": [
+            "left_elbow",
+            "left_wrist"
+        ],
+        "value_dict": {
+            "left_elbow": [
+                -76.67457580566406,
+                81.17578125
+            ],
+            "left_wrist": [
+                -157.1609649658203,
+                -39.96327209472656
+            ]
+        }
+    },
+    {
+        "name": "RightHandOnHead",
+        "index": 7,
+        "basekeypoints": "right_shoulder",
+        "list_corekeypoints": [
+            "right_elbow",
+            "right_wrist",
+            "right_eye"
+        ],
+        "value_dict": {
+            "right_elbow": [
+                83.32156372070312,
+                -85.59181213378906
+            ],
+            "right_wrist": [
+                -33.407562255859375,
+                -150.03038024902344
+            ],
+            "right_eye": [
+                -87.55984497070312,
+                -114.21543884277344
+            ]
+        }
+    },
+    {
+        "name": "RightHandOnHip",
+        "index": 3,
+        "basekeypoints": "right_shoulder",
+        "list_corekeypoints": [
+            "right_elbow",
+            "right_wrist"
+        ],
+        "value_dict": {
+            "right_elbow": [
+                95.72293090820312,
+                82.81088256835938
+            ],
+            "right_wrist": [
+                31.795166015625,
+                177.29721069335938
+            ]
+        }
+    },
+    {
+        "name": "RightHandOnShoulder",
+        "index": 11,
+        "basekeypoints": "right_shoulder",
+        "list_corekeypoints": [
+            "right_elbow",
+            "right_wrist",
+            "left_shoulder"
+        ],
+        "value_dict": {
+            "right_elbow": [
+                6.30242919921875,
+                90.78425598144531
+            ],
+            "right_wrist": [
+                -111.33969116210938,
+                31.734481811523438
+            ],
+            "left_shoulder": [
+                -167.52532958984375,
+                24.355514526367188
+            ]
+        }
+    },
+    {
+        "name": "RightHandOut",
+        "index": 9,
+        "basekeypoints": "right_shoulder",
+        "list_corekeypoints": [
+            "right_elbow",
+            "right_wrist"
+        ],
+        "value_dict": {
+            "right_elbow": [
+                69.11349487304688,
+                68.037841796875
+            ],
+            "right_wrist": [
+                161.825439453125,
+                71.52139282226562
+            ]
+        }
+    },
+    {
+        "name": "RightHandUp",
+        "index": 5,
+        "basekeypoints": "right_shoulder",
+        "list_corekeypoints": [
+            "right_elbow",
+            "right_wrist"
+        ],
+        "value_dict": {
+            "right_elbow": [
+                80.53787231445312,
+                -99.63442993164062
+            ],
+            "right_wrist": [
+                66.98867797851562,
+                -219.03517150878906
+            ]
+        }
+    },
+    {
+        "name": "RightV",
+        "index": 1,
+        "basekeypoints": "right_shoulder",
+        "list_corekeypoints": [
+            "right_elbow",
+            "right_wrist"
+        ],
+        "value_dict": {
+            "right_elbow": [
+                108.55154418945312,
+                55.9530029296875
+            ],
+            "right_wrist": [
+                177.73501586914062,
+                -42.712554931640625
+            ]
+        }
+    }
+]
