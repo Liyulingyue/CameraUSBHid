@@ -1,11 +1,17 @@
 import cv2
 
-from Tools.ov.Estimator import HumanPoseEstimator
+# from Tools.ov.Estimator import HumanPoseEstimator
+# model_path = "Models/human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml"
+# device = "CPU"
+# estimator = HumanPoseEstimator(model_path, device)
+
+from Tools.fastdeploy.Estimator import HumanPoseEstimator
+model_path = "Models/tinypose_128x96"
+device = "CPU"
+estimator = HumanPoseEstimator(model_path, device)
 
 if __name__ == '__main__':
-    model_path = "Models/human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml"
-    device = "CPU"
-    estimator = HumanPoseEstimator(model_path, device)
+
     frame = cv2.imread('example.jpg')
     poses, drawed_frame = estimator.infer(frame, True)
     # print(poses)
