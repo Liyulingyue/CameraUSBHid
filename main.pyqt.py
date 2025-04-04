@@ -6,7 +6,6 @@ from PyQt5.QtCore import QTimer, Qt
 
 from Tools.bytes2command import bytes2command
 from Tools.sendcommand import send_commands_timeout as send_command
-# from Tools.posedict2state import posedict2state
 # from Tools.state2bytes import state2bytes
 from Tools.posedict2state_vector import posedict2state
 from Tools.state2bytes_vector import state2bytes
@@ -16,7 +15,7 @@ from Tools.state2bytes_vector import state2bytes
 # device = "CPU"
 # estimator = HumanPoseEstimator(model_path, device)
 
-IF_SEND_COMMAND = False
+IF_SEND_COMMAND = True # 是否发送命令
 
 from Tools.fastdeploy.Estimator import HumanPoseEstimator
 model_path = "Models/tinypose_128x96"
