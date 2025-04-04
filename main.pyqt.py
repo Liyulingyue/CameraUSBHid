@@ -16,21 +16,25 @@ from Tools.state2bytes_vector import state2bytes
 # estimator = HumanPoseEstimator(model_path, device)
 
 IF_SEND_COMMAND = True # 是否发送命令
+DEBUG_FLAG = "undebug" # 调试模式，可选值："debug"、"undebug"
 
 from Tools.fastdeploy.Estimator import HumanPoseEstimator
 model_path = "Models/tinypose_128x96"
 device = "CPU"
 estimator = HumanPoseEstimator(model_path, device)
 
+server_ip = '192.168.2.184'
+port = 80
+
 # 假设的图像处理函数，返回一个整数 N
 def process_frame(poses):
     if len(poses) == 0:
         return ""
-    gesture_list = posedict2state(poses)
+    gesture_list = posedict2state(poses, type=DEBUG_FLAG)
     bytes_list = state2bytes(gesture_list)
     command = bytes2command(bytes_list)
     if IF_SEND_COMMAND:
-        send_command(server_ip='192.168.2.184', port=80, command=command)
+        send_command(server_ip=server_ip, port=port, command=command)
     return "/".join([str(x) for x in gesture_list])  # 示例返回值
 
 class CameraApp(QMainWindow):
