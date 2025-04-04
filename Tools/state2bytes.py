@@ -44,7 +44,7 @@ def state2words(state):
     return words_list
 
 def words2bytes(words_list):
-    bytes_list = [words2bytes_dict[x] for x in words_list]
+    bytes_list = [words2bytes_dict.get(x, 0x00) for x in words_list]
 
     return bytes_list
 

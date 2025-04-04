@@ -9,6 +9,7 @@ def bytes2command(data_list):
         bytes: 完整的二进制命令包
     """
     data_list = [0x00] if len(data_list) == 0 else data_list
+    data_list = [0x00] * (8 - len(data_list)) + data_list # 补零，避免无反应
 
     # 固定帧头 (2字节)
     header = [0x57, 0xAB]
