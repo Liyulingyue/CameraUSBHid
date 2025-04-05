@@ -1,8 +1,6 @@
 import numpy as np
 import json
 
-from pandas.core.arrays.arrow import ListAccessor
-
 config_list = json.load(open("Source/configs.json"))
 
 # 计算余弦相似度
