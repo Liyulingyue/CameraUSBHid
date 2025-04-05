@@ -51,8 +51,8 @@
 ### 硬件设备软件配置
 > 如果你第一次使用微控制器，可以参考 https://pico.org.cn/ 中 "如何在 Pico 上使用 MicroPython"，只需要简单3分钟即可快速入门。
 - 下载 [Thonny](https://thonny.org/) 并安装，打开 Thonny 并连接到 树莓派Pico W 或 树莓派Pico WH。
-- 修改 LowerMachine/CH9329Sever.py 文件末尾的 WIFI账号和密码为你的WIFI账号和密码信息。
-- 将 LowerMachine/CH9329Sever.py 保存到树莓派Pico W 或 树莓派Pico WH 中，保存为 main.py。
+- 修改 LowerMachine/RaspberryPicoW.py 文件末尾的 WIFI账号和密码为你的WIFI账号和密码信息。
+- 将 LowerMachine/RaspberryPicoW.py 保存到树莓派Pico W 或 树莓派Pico WH 中，保存为 main.py。
 - 在 Thonny 中运行 main.py。
 - 在 Thonny 中读取输出的 IP 地址，并记录这个地址（后面会用到）。
 
@@ -73,6 +73,11 @@ pip install -r requirements.txt
 
 ### 动作与配置
 当前支持检测的动作可以参考 Source/id.json，每种动作对饮过的姿态可以参考 Source/Images，姿态与键盘输入的对应关系参考 Tools/state2bytes_vector.py。
+
+### 使用K230替代电脑进行检测(未充分验证)
+- 修改 LowerMachine/K230.py 文件的 WIFI账号、密码、树莓派Pico的IP 为你的设备信息。
+- 将 LowerMachine/K230.py 保存到K230中，保存为 main.py。（Micropython版本）
+- 插电后，将摄像头对准人体即可。
 
 ## 调试与自定义
 你可以通过 debug.gradio.py 配置、记录新的姿势，并生成对应的配置文件 Source/configs.json，之后，仅需要修改 Tools/state2bytes_vector.py 中姿势和键盘输入的对应关系即可。

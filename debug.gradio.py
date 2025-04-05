@@ -8,7 +8,7 @@ import numpy as np
 from Tools.state2bytes import words2bytes
 from Tools.bytes2command import bytes2command
 from Tools.sendcommand import send_command
-from Tools.sendcommand import send_commands_timeout as send_command
+from Tools.sendcommand import send_command_timeout as send_command
 
 # from Tools.ov.Estimator import HumanPoseEstimator, draw_poses
 # from Tools.ov.utils import body_mapper

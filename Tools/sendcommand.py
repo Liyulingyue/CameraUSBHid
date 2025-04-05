@@ -25,7 +25,7 @@ def send_command(server_ip='192.168.2.184', port=80, command="", ifencode=False)
         # 关闭套接字
         sock.close()
 
-def send_commands_timeout(server_ip='192.168.2.184', port=80, command="", timeout=1, ifencode=False):
+def send_command_timeout(server_ip='192.168.2.184', port=80, command="", timeout=1, ifencode=False):
     global last_command
     if last_command == command:
         return

@@ -5,7 +5,7 @@ from PyQt5.QtGui import QImage, QPixmap, QFont
 from PyQt5.QtCore import QTimer, Qt
 
 from Tools.bytes2command import bytes2command
-from Tools.sendcommand import send_commands_timeout as send_command
+from Tools.sendcommand import send_command_timeout as send_command
 # from Tools.state2bytes import state2bytes
 from Tools.posedict2state_vector import posedict2state
 from Tools.state2bytes_vector import state2bytes
