@@ -1,52 +1,76 @@
+import json
+
 words2bytes_dict = {
-    's': 0x16,
-    'w': 0x1A,
-    'd': 0x07,
-    'a': 0x04,
+    's': 0x16, #
+    'w': 0x1A, #
+    'd': 0x07, #
+    'a': 0x04, #
+    'x': 0x1B, #
+    'f': 0x09, #
     'j': 0x0D,
     'k': 0x0E,
-    'e': 0x08,
-    'q': 0x14,
+    'e': 0x08, #
+    'q': 0x14, #
     'i': 0x0C,
     'o': 0x12,
     'n': 0x11,
     'm': 0x10,
+    '1': 0x1E, #
+    '2': 0x1F, #
+    '3': 0x20, #
+    '4': 0x21, #
+    '5': 0x22, #
+    '6': 0x23,
+    "LeftMouse": "LeftMouse",
 }
+
+with open("Source/mapper.json", "r", encoding="utf-8") as f:
+    data = json.load(f)
+    mapper_list = data["mapper"]
+
 def state2words(state):
     words_list = []
+    for i in range(len(mapper_list)):
+        action_list = mapper_list[i]["action"]
+        keys_list = mapper_list[i]["keys"]
+        # 若action_list中每个元素都在state中，则将keys_list添加到words_list中
+        if all(item in state for item in action_list):
+            words_list += keys_list
+    words_list = list(set(words_list))
+    return words_list
 
-    # state to list of words
-    if 11 in state:
-        words_list.append('s')
-    elif 3 in state and 4 in state: # 向前
-        words_list.append('w')
-    elif 3 in state:
-        words_list.append('d')
-    elif 4 in state:
-        words_list.append('a')
-    else:
-        pass
-
-    # 左右
-    if 1 in state:
-        words_list.append('j') # 平A
-    if 2 in state:
-        words_list.append('k') # 闪避
-
-    if 9 in state:
-        words_list.append('e') # e技能
-    if 10 in state:
-        words_list.append('q') # q技能
-
-    if 5 in state:
-        words_list.append('i') # 确认
-    if 6 in state:
-        words_list.append('o') # 取消
-
-    if 7 in state:
-        words_list.append('n') # 向右转
-    if 8 in state:
-        words_list.append('m') # 向左转
+    # # state to list of words
+    # if 11 in state:
+    #     words_list.append('s')
+    # elif 3 in state and 4 in state: # 向前
+    #     words_list.append('w')
+    # elif 3 in state:
+    #     words_list.append('d')
+    # elif 4 in state:
+    #     words_list.append('a')
+    # else:
+    #     pass
+    #
+    # # 左右
+    # if 1 in state:
+    #     words_list.append('j') # 平A
+    # if 2 in state:
+    #     words_list.append('k') # 闪避
+    #
+    # if 9 in state:
+    #     words_list.append('e') # e技能
+    # if 10 in state:
+    #     words_list.append('q') # q技能
+    #
+    # if 5 in state:
+    #     words_list.append('i') # 确认
+    # if 6 in state:
+    #     words_list.append('o') # 取消
+    #
+    # if 7 in state:
+    #     words_list.append('n') # 向右转
+    # if 8 in state:
+    #     words_list.append('m') # 向左转
 
     return words_list
 

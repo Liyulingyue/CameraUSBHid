@@ -23,6 +23,8 @@ model_path = "Models/tinypose_128x96"
 device = "CPU"
 estimator = HumanPoseEstimator(model_path, device)
 
+key_choices_list = [chr(i) for i in range(ord('a'), ord('z') + 1)] + [int(i) for i in range(10)] + ["LeftMouse"]
+
 
 def fn_btn_save(img_raw, name, index, basekeypoints, list_corekeypoints):
     result, _ = estimator.infer(img_raw, False)
@@ -252,7 +254,7 @@ with gr.Blocks() as App:
         with gr.Row():
             dropdown_line = gr.Dropdown(choices=[], value=1, label="选择行", interactive=True)
             dropdown_action = gr.Dropdown(choices=[], label="选择动作", interactive=True)
-            dropdown_key = gr.Dropdown(choices=[chr(i) for i in range(ord('a'), ord('z') + 1)], value="a",
+            dropdown_key = gr.Dropdown(choices=key_choices_list, value="a",
                                        label="选择按键", interactive=True)
         with gr.Row():
             btn_add_action = gr.Button("添加动作")
