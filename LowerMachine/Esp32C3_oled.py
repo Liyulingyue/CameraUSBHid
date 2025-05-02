@@ -63,8 +63,8 @@ def start_server():
 
 if __name__ == '__main__':
     # 连接到 Wi-Fi， WIFI名称、密码
-    Wifi_Name = 'LYLY'
-    Wifi_Password = 'zyq20220701'
+    Wifi_Name = '*********'
+    Wifi_Password = '*************'
     connect_to_wifi(Wifi_Name, Wifi_Password)
     # 启动服务器
     start_server()
