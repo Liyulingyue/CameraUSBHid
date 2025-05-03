@@ -5,6 +5,8 @@
 
 ![workflow.png](Docs/workflow.png)
 
+> 🎉🎉🎉家人们，我出息了，能在硬件社区公开原理图了 https://oshwhub.com/liyulingyue/camerausbhid
+
 ## 开发环境
 > 不重要，只是摆在这里而已
 - 开发语言为Python 和 Micropython
