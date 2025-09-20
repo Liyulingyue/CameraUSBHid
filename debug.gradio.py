@@ -6,20 +6,20 @@ import gradio as gr
 import numpy as np
 import pandas as pd
 
-from Tools.state2bytes import words2bytes
-from Tools.bytes2command import bytes2command
-from Tools.sendcommand import send_command
-from Tools.sendcommand import send_command_timeout as send_command
+from UpperMachine.state2bytes import words2bytes
+from UpperMachine.bytes2command import bytes2command
+from UpperMachine.sendcommand import send_command
+from UpperMachine.sendcommand import send_command_timeout as send_command
 
-# from Tools.ov.Estimator import HumanPoseEstimator, draw_poses
-# from Tools.ov.utils import body_mapper
-# model_path = "Models/human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml"
+# from UpperMachine.ov.Estimator import HumanPoseEstimator, draw_poses
+# from UpperMachine.ov.utils import body_mapper
+# model_path = "Source/Models/human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml"
 # device = "CPU"
 # estimator = HumanPoseEstimator(model_path, device)
 
-from Tools.fastdeploy.utils import body_mapper, draw_poses
-from Tools.fastdeploy.Estimator import HumanPoseEstimator
-model_path = "Models/tinypose_128x96"
+from UpperMachine.fastdeploy.utils import body_mapper, draw_poses
+from UpperMachine.fastdeploy.Estimator import HumanPoseEstimator
+model_path = "Source/Models/tinypose_128x96"
 device = "CPU"
 estimator = HumanPoseEstimator(model_path, device)
 

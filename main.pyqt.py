@@ -4,22 +4,22 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWid
 from PyQt5.QtGui import QImage, QPixmap, QFont
 from PyQt5.QtCore import QTimer, Qt
 
-from Tools.bytes2command import bytes2command
-from Tools.sendcommand import send_command_timeout as send_command
-# from Tools.state2bytes import state2bytes
-from Tools.posedict2state_vector import posedict2state
-from Tools.state2bytes_vector import state2bytes
+from UpperMachine.bytes2command import bytes2command
+from UpperMachine.sendcommand import send_command_timeout as send_command
+# from UpperMachine.state2bytes import state2bytes
+from UpperMachine.posedict2state_vector import posedict2state
+from UpperMachine.state2bytes_vector import state2bytes
 
-# from Tools.ov.Estimator import HumanPoseEstimator
-# model_path = "Models/human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml"
+# from UpperMachine.ov.Estimator import HumanPoseEstimator
+# model_path = "Source/Models/human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml"
 # device = "CPU"
 # estimator = HumanPoseEstimator(model_path, device)
 
 IF_SEND_COMMAND = True # 是否发送命令
 DEBUG_FLAG = "undebug" # 调试模式，可选值："debug"、"undebug"
 
-from Tools.fastdeploy.Estimator import HumanPoseEstimator
-model_path = "Models/tinypose_128x96"
+from UpperMachine.fastdeploy.Estimator import HumanPoseEstimator
+model_path = "Source/Models/tinypose_128x96"
 device = "CPU"
 estimator = HumanPoseEstimator(model_path, device)
 

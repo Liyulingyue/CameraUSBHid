@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 
 # Load a model
-model = YOLO("./Models/yolo11x-pose.pt", device="CPU")  # load an official model
+model = YOLO("./Source/Models/yolo11x-pose.pt", device="CPU")  # load an official model
 # Predict with the model
 results = model("https://ultralytics.com/images/bus.jpg")  # predict on an image
 

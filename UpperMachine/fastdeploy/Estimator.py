@@ -7,7 +7,7 @@ from .utils import body_mapper, draw_poses
 
 
 class HumanPoseEstimator():
-    def __init__(self, model_path="Models/tinypose_128x96", device="CPU"):
+    def __init__(self, model_path="Source/Models/tinypose_128x96", device="CPU"):
         self.model = fastdeploy.vision.keypointdetection.PPTinyPose(
             os.path.join(model_path, "model.pdmodel"),
             os.path.join(model_path, "model.pdiparams"),

@@ -2,7 +2,7 @@ from .decoder import OpenPoseDecoder
 from .utils import create_model, model_predict, draw_poses, body_mapper
 
 class HumanPoseEstimator():
-    def __init__(self, model_path="Models/human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml", device="CPU"):
+    def __init__(self, model_path="Source/Models/human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml", device="CPU"):
         self.model_infor = create_model(model_path, device)
         self.decoder = OpenPoseDecoder()
 

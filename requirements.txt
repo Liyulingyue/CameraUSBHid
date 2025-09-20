@@ -1,4 +1,4 @@
-openvino<=2023
+openvino
 numpy
 opencv-python
 fastdeploy-python

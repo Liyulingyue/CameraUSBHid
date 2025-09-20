@@ -1,12 +1,12 @@
 import cv2
 
-# from Tools.ov.Estimator import HumanPoseEstimator
-# model_path = "Models/human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml"
+# from UpperMachine.ov.Estimator import HumanPoseEstimator
+# model_path = "Source/Models/human-pose-estimation-0001/FP16-INT8/human-pose-estimation-0001.xml"
 # device = "CPU"
 # estimator = HumanPoseEstimator(model_path, device)
 
-from Tools.fastdeploy.Estimator import HumanPoseEstimator
-model_path = "Models/tinypose_128x96"
+from UpperMachine.fastdeploy.Estimator import HumanPoseEstimator
+model_path = "Source/Models/tinypose_128x96"
 device = "CPU"
 estimator = HumanPoseEstimator(model_path, device)
 
