@@ -5,7 +5,6 @@
 
 ![workflow.png](Docs/workflow.png)
 
-> 🎉🎉🎉家人们，我出息了，能在硬件社区公开原理图了 https://oshwhub.com/liyulingyue/camerausbhid
 
 ## 开发环境
 - 硬件组成
