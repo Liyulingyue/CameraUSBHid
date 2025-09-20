@@ -4,3 +4,4 @@ __pycache__/
 .vscode/
 Source/
 !Source/.gitkeep
+venv/
