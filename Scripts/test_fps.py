@@ -5,7 +5,7 @@ import cv2
 # device = "CPU"
 # estimator = HumanPoseEstimator(model_path, device)
 
-from UpperMachine.fastdeploy.Estimator import HumanPoseEstimator
+from UpperMachine.pose_estimation.fastdeploy.Estimator import HumanPoseEstimator
 model_path = "Source/Models/tinypose_128x96"
 device = "CPU"
 estimator = HumanPoseEstimator(model_path, device)

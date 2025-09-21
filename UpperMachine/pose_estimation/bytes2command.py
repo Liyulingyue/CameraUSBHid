@@ -1,6 +1,6 @@
 def bytes2command(data_list):
     """
-    生成符合指定协议格式的二进制命令包
+    生成符合指定协议格式的二进制命令包 (键盘)
 
     参数:
         data_list (list): 要发送的数据列表，每个元素应为0-255的整数
@@ -17,7 +17,7 @@ def bytes2command(data_list):
     # 地址字段 (1字节)
     addr = 0x00
 
-    # 命令字段 (1字节)
+    # 命令字段 (1字节) - 0x02 表示键盘命令
     cmd = 0x02
 
     # 数据长度字段 (1字节)
@@ -35,6 +35,77 @@ def bytes2command(data_list):
         bytes([checksum])         # 校验和
     )
     print(packet)
+
+    return packet
+
+
+def mouse2command(action):
+    """
+    根据鼠标动作生成完整的 USB 鼠标命令包
+    数据包格式：
+    - 帧头 (2字节): 0x57, 0xAB
+    - 地址 (1字节): 0x00
+    - 命令 (1字节): 0x04 (鼠标命令)
+    - 数据长度 (1字节): 0x07 (固定7字节)
+    - 数据 (7字节): USB 绝对鼠标数据包
+    - 校验和 (1字节): 累加和
+    """
+    # 生成7字节鼠标数据包
+    data_packet = [0x02]  # 第1个字节固定为0x02
+
+    # 初始化默认值
+    button_value = 0x00  # 鼠标按键值
+    x_axis = 0x0000  # X轴坐标值
+    y_axis = 0x0000  # Y轴坐标值
+    wheel = 0x00  # 滚轮滚动齿数
+
+    # 根据动作类型设置数据包内容
+    if action == -1:  # 鼠标左键按下
+        button_value = 0x01
+    elif action == -2:  # 鼠标左键释放
+        button_value = 0x00
+    elif action == -3:  # 鼠标右键按下
+        button_value = 0x02
+    elif action == -4:  # 鼠标右键释放
+        button_value = 0x00
+    elif action == -5:  # 鼠标中键按下
+        button_value = 0x04
+    elif action == -6:  # 鼠标中键释放
+        button_value = 0x00
+    elif action == -7:  # 滚轮向上
+        wheel = 0x01
+    elif action == -8:  # 滚轮向下
+        wheel = 0xFF
+
+    # 将X轴和Y轴坐标值分解为低字节和高字节
+    x_low = x_axis & 0xFF
+    x_high = (x_axis >> 8) & 0xFF
+    y_low = y_axis & 0xFF
+    y_high = (y_axis >> 8) & 0xFF
+
+    # 构造7字节数据包
+    data_packet.append(button_value)  # 第2个字节：鼠标按键值
+    data_packet.append(x_low)         # 第3个字节：X轴低字节
+    data_packet.append(x_high)        # 第4个字节：X轴高字节
+    data_packet.append(y_low)         # 第5个字节：Y轴低字节
+    data_packet.append(y_high)        # 第6个字节：Y轴高字节
+    data_packet.append(wheel)         # 第7个字节：滚轮滚动齿数
+
+    # 构造完整命令包
+    header = [0x57, 0xAB]  # 帧头
+    addr = 0x00            # 地址
+    cmd = 0x04             # 命令 (鼠标命令)
+    data_length = 0x07     # 数据长度 (固定7字节)
+
+    # 计算校验和：地址 + 命令 + 数据长度 + 所有数据字节的和
+    checksum = (sum(header) + addr + cmd + data_length + sum(data_packet)) % 256
+
+    # 组装完整数据包
+    packet = (bytes(header) +           # 帧头
+              bytes([addr, cmd, data_length]) +  # 地址、命令、长度
+              bytes(data_packet) +      # 数据部分
+              bytes([checksum])         # 校验和
+    )
 
     return packet
 
@@ -57,3 +128,16 @@ if __name__ == "__main__":
     command = bytes2command(edge_case)
     print("生成命令:", command.hex(' ').upper())
     # 输出: 57 AB 00 82 01 FF 82
+
+    # 鼠标命令示例
+    mouse_command = mouse2command(-1)  # 左键按下
+    print("鼠标命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 02 01 00 00 00 00 01
+
+    mouse_command = mouse2command(-7)  # 滚轮向上
+    print("鼠标命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 02 00 00 00 00 00 01
+
+    mouse_command = mouse2command(-8)  # 滚轮向下
+    print("鼠标命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 02 00 00 00 00 00 FF

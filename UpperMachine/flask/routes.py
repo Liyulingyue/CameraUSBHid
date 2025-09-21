@@ -9,7 +9,7 @@ from queue import Queue
 import numpy as np
 
 # 导入姿态检测相关模块
-from UpperMachine.flask.service import pose_service
+from UpperMachine.pose_estimation.service import pose_service
 
 def register_routes(app, socketio):
     @app.route('/')
@@ -195,7 +195,7 @@ def register_routes(app, socketio):
         try:
             from UpperMachine.pose_estimation.sendcommand import send_command_timeout as send_command
             from UpperMachine.pose_estimation.bytes2command import bytes2command
-            from UpperMachine.pose_estimation.state2bytes import words2bytes
+            from UpperMachine.pose_estimation.state2bytes_vector import words2bytes
             
             result = send_command(url, port, bytes2command(words2bytes(words)))
             return jsonify({'status': 'success', 'result': str(result)})
