@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时姿态检测 - 姿态检测系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 1.1em;
+        }
+
+        .nav-links {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.3s ease;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .video-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #video-frame {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #da190b;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .panel h3 {
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .config-item {
+            margin-bottom: 15px;
+        }
+
+        .config-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .detection-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .pose-state {
+            margin-top: 10px;
+            font-weight: 500;
+            color: #4CAF50;
+        }
+
+        .command-log {
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .command-item {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .command-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #f44336;
+            margin-right: 5px;
+        }
+
+        .status-indicator.connected {
+            background: #4CAF50;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links a {
+                display: block;
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 实时姿态检测</h1>
+            <p>基于OpenVINO的实时人体姿态检测系统</p>
+        </div>
+
+        <div class="nav-links">
+            <a href="/" class="active">主页</a>
+            <a href="/realtime">实时检测</a>
+            <a href="/debug">调试工具</a>
+        </div>
+
+        <div class="main-content">
+            <div class="video-section">
+                <div class="video-container">
+                    <img id="video-frame" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQwIiBoZWlnaHQ9IjQ4MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuetieW+heaRhOWDj+WktOWQr+WKqC4uLjwvdGV4dD48L3N2Zz4=" alt="视频流">
+                    <div class="video-overlay">
+                        <span class="status-indicator" id="connection-indicator"></span>
+                        <span id="connection-status">未连接</span> | FPS: <span id="fps-display">0</span>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn btn-primary" id="start-btn">启动摄像头</button>
+                    <button class="btn btn-danger" id="stop-btn" disabled>停止摄像头</button>
+                </div>
+            </div>
+            
+            <div class="sidebar">
+                <div class="panel">
+                    <h3>⚙️ 控制面板</h3>
+                    
+                    <div class="config-item">
+                        <label for="confidence-slider">置信度阈值: <span id="confidence-value">0.3</span></label>
+                        <input type="range" id="confidence-slider" min="0.1" max="1.0" step="0.1" value="0.3">
+                    </div>
+                    
+                    <div class="config-item">
+                        <label>
+                            <input type="checkbox" id="send-commands-checkbox">
+                            启用命令发送
+                        </label>
+                    </div>
+                    
+                    <div class="config-item">
+                        <label for="fps-slider">FPS限制: <span id="fps-value">30</span></label>
+                        <input type="range" id="fps-slider" min="10" max="60" step="5" value="30">
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <h3>📊 实时统计</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="frames-processed">0</div>
+                            <div class="stat-label">处理帧数</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="poses-detected">0</div>
+                            <div class="stat-label">检测姿态</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="commands-sent">0</div>
+                            <div class="stat-label">发送命令</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="current-fps">0</div>
+                            <div class="stat-label">当前FPS</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <h3>🎯 检测结果</h3>
+                    <div class="detection-info">
+                        <div>姿态数量: <span id="poses-count">0</span></div>
+                        <div class="pose-state" id="pose-state">等待检测...</div>
+                    </div>
+                </div>
+                
+                <div class="panel" id="command-panel" style="display: none;">
+                    <h3>📜 命令历史</h3>
+                    <div class="command-log" id="command-log">
+                        <div class="command-item">等待命令...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        const videoFrame = document.getElementById('video-frame');
+        const connectionIndicator = document.getElementById('connection-indicator');
+        const connectionStatus = document.getElementById('connection-status');
+        const fpsDisplay = document.getElementById('fps-display');
+        const startBtn = document.getElementById('start-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const confidenceSlider = document.getElementById('confidence-slider');
+        const confidenceValue = document.getElementById('confidence-value');
+        const sendCommandsCheckbox = document.getElementById('send-commands-checkbox');
+        const fpsSlider = document.getElementById('fps-slider');
+        const fpsValue = document.getElementById('fps-value');
+        const framesProcessed = document.getElementById('frames-processed');
+        const posesDetected = document.getElementById('poses-detected');
+        const commandsSent = document.getElementById('commands-sent');
+        const currentFps = document.getElementById('current-fps');
+        const posesCount = document.getElementById('poses-count');
+        const poseState = document.getElementById('pose-state');
+        const commandPanel = document.getElementById('command-panel');
+        const commandLog = document.getElementById('command-log');
+
+        // Socket.IO 事件监听
+        socket.on('connect', function() {
+            connectionIndicator.classList.add('connected');
+            connectionStatus.textContent = '已连接';
+        });
+
+        socket.on('disconnect', function() {
+            connectionIndicator.classList.remove('connected');
+            connectionStatus.textContent = '未连接';
+        });
+
+        socket.on('video_frame', function(data) {
+            videoFrame.src = 'data:image/jpeg;base64,' + data.frame;
+        });
+
+        socket.on('frame_update', function(data) {
+            // 更新视频画面
+            videoFrame.src = 'data:image/jpeg;base64,' + data.image;
+            
+            // 更新姿态信息
+            posesCount.textContent = data.poses_count;
+            poseState.textContent = data.state || '等待检测...';
+            
+            // 更新统计信息
+            if (data.stats) {
+                framesProcessed.textContent = data.stats.frames_processed || 0;
+                posesDetected.textContent = data.stats.poses_detected || 0;
+                commandsSent.textContent = data.stats.commands_sent || 0;
+                currentFps.textContent = data.stats.current_fps || 0;
+                fpsDisplay.textContent = data.stats.current_fps || 0;
+            }
+        });
+
+        socket.on('error', function(data) {
+            alert('错误: ' + data.message);
+        });
+
+        // 按钮事件
+        startBtn.addEventListener('click', function() {
+            socket.emit('start_camera');
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+        });
+
+        stopBtn.addEventListener('click', function() {
+            socket.emit('stop_camera');
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        });
+
+        // 配置更新事件
+        confidenceSlider.addEventListener('input', function() {
+            confidenceValue.textContent = this.value;
+            updateConfig();
+        });
+
+        sendCommandsCheckbox.addEventListener('change', function() {
+            commandPanel.style.display = this.checked ? 'block' : 'none';
+            updateConfig();
+        });
+
+        fpsSlider.addEventListener('input', function() {
+            fpsValue.textContent = this.value;
+            updateConfig();
+        });
+
+        function updateConfig() {
+            const config = {
+                confidence_threshold: parseFloat(confidenceSlider.value),
+                send_commands_enabled: sendCommandsCheckbox.checked,
+                fps_limit: parseInt(fpsSlider.value)
+            };
+
+            socket.emit('update_config', config);
+        }
+
+        // 定期获取命令历史
+        setInterval(function() {
+            if (sendCommandsCheckbox.checked) {
+                fetchCommandHistory();
+            }
+        }, 2000);
+
+        function fetchCommandHistory() {
+            fetch('/api/commands?count=5')
+                .then(response => response.json())
+                .then(commands => {
+                    if (commands.length > 0) {
+                        commandLog.innerHTML = commands.map(cmd =>
+                            `<div class="command-item">
+                                ${new Date(cmd.timestamp * 1000).toLocaleTimeString()}:
+                                ${cmd.command.substring(0, 16)}...
+                            </div>`
+                        ).join('');
+                    }
+                })
+                .catch(error => console.error('获取命令历史失败:', error));
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

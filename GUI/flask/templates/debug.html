@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>调试工具 - 姿态检测系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 1.1em;
+        }
+
+        .nav-links {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.3s ease;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .debug-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-pills .nav-link {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+        }
+
+        .nav-pills .nav-link.active {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .card-body {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .form-label {
+            color: white;
+            font-weight: 500;
+        }
+
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #4CAF50;
+            color: white;
+            box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            border: none;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            border: none;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            border: none;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            border: none;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+            color: #212529;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            border: none;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .table {
+            color: white;
+        }
+
+        .table-striped tbody tr:nth-of-type(odd) {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .table th {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .table td {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .nav-links a {
+                display: block;
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 调试工具</h1>
+            <p>姿态检测系统调试和配置工具</p>
+        </div>
+
+        <div class="nav-links">
+            <a href="/">主页</a>
+            <a href="/realtime">实时检测</a>
+            <a href="/debug" class="active">调试工具</a>
+        </div>
+
+        <div class="debug-container">
+            <ul class="nav nav-pills mb-3" id="debugTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="mouse-tab" data-bs-toggle="pill" data-bs-target="#mouse" type="button" role="tab" aria-controls="mouse" aria-selected="true">鼠标远程控制</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="pose-tab" data-bs-toggle="pill" data-bs-target="#pose" type="button" role="tab" aria-controls="pose" aria-selected="false">姿态检测调试</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="mapping-tab" data-bs-toggle="pill" data-bs-target="#mapping" type="button" role="tab" aria-controls="mapping" aria-selected="false">姿态与动作映射</button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="debugTabContent">
+                <div class="tab-pane fade show active" id="mouse" role="tabpanel" aria-labelledby="mouse-tab">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">鼠标远程控制</h5>
+                            <p class="card-text">通过发送指令控制远程鼠标</p>
+                            <form id="mouse-form">
+                                <div class="mb-3">
+                                    <label for="mouse-url" class="form-label">远程鼠标调试地址</label>
+                                    <input type="text" class="form-control" id="mouse-url" value="192.168.2.184">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="mouse-port" class="form-label">远程鼠标调试端口</label>
+                                    <input type="number" class="form-control" id="mouse-port" value="80">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="mouse-words" class="form-label">远程鼠标调试字符</label>
+                                    <input type="text" class="form-control" id="mouse-words" value="a">
+                                </div>
+                                <button type="submit" class="btn btn-primary">发送</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="pose" role="tabpanel" aria-labelledby="pose-tab">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">姿态检测调试</h5>
+                            <p class="card-text">上传图像进行姿态检测并保存模板</p>
+                            <form id="pose-form" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="pose-image" class="form-label">人物画面</label>
+                                    <input type="file" class="form-control" id="pose-image" accept="image/*">
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <img id="pose-raw" class="img-fluid" style="display: none;">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <img id="pose-keypoints" class="img-fluid" style="display: none;">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-secondary mt-3" id="detect-btn">检测</button>
+                                <div class="row mt-3">
+                                    <div class="col-md-4">
+                                        <label for="pose-name" class="form-label">姿势名称</label>
+                                        <input type="text" class="form-control" id="pose-name">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="pose-index" class="form-label">索引</label>
+                                        <input type="number" class="form-control" id="pose-index">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="pose-base" class="form-label">基准关键点</label>
+                                        <select class="form-select" id="pose-base">
+                                            <!-- Options will be populated by JS -->
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">核心关键点</label>
+                                    <div id="core-keypoints">
+                                        <!-- Checkboxes will be populated by JS -->
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">保存姿态模板</button>
+                                <button type="button" class="btn btn-success ms-2" id="generate-config-btn">生成配置文件</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="mapping" role="tabpanel" aria-labelledby="mapping-tab">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">姿态与动作映射配置</h5>
+                            <p class="card-text">配置姿态与动作的映射关系</p>
+                            <div class="mb-3">
+                                <button class="btn btn-primary" id="generate-table-btn">生成表格</button>
+                                <button class="btn btn-secondary ms-2" id="read-table-btn">读取表格</button>
+                                <button class="btn btn-success ms-2" id="save-table-btn">保存表格</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-striped" id="mapping-table">
+                                    <thead>
+                                        <tr>
+                                            <th>序号</th>
+                                            <th>动作名称</th>
+                                            <th>按键</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Table rows will be populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-4">
+                                    <label for="table-line" class="form-label">选择行</label>
+                                    <select class="form-select" id="table-line">
+                                        <!-- Options will be populated -->
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="table-action" class="form-label">选择动作</label>
+                                    <select class="form-select" id="table-action">
+                                        <!-- Options will be populated -->
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="table-key" class="form-label">选择按键</label>
+                                    <select class="form-select" id="table-key">
+                                        <!-- Options will be populated -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button class="btn btn-info" id="add-action-btn">添加动作</button>
+                                <button class="btn btn-warning ms-2" id="delete-action-btn">清空动作</button>
+                                <button class="btn btn-info ms-2" id="add-key-btn">添加按键</button>
+                                <button class="btn btn-warning ms-2" id="delete-key-btn">清空按键</button>
+                                <button class="btn btn-secondary ms-2" id="new-line-btn">新增行</button>
+                                <button class="btn btn-danger ms-2" id="delete-line-btn">删除行</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 鼠标远程控制功能
+        document.getElementById('mouse-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const url = document.getElementById('mouse-url').value;
+            const port = document.getElementById('mouse-port').value;
+            const words = document.getElementById('mouse-words').value;
+
+            fetch(`http://${url}:${port}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `words=${encodeURIComponent(words)}`
+            })
+            .then(response => response.text())
+            .then(data => {
+                alert('发送成功: ' + data);
+            })
+            .catch(error => {
+                alert('发送失败: ' + error);
+            });
+        });
+
+        // 姿态检测调试功能
+        let keypointsData = null;
+
+        document.getElementById('pose-image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('pose-raw').src = e.target.result;
+                    document.getElementById('pose-raw').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('detect-btn').addEventListener('click', function() {
+            const fileInput = document.getElementById('pose-image');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('请先选择图像文件');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            fetch('/api/detect_pose', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('pose-keypoints').src = 'data:image/jpeg;base64,' + data.keypoints_image;
+                    document.getElementById('pose-keypoints').style.display = 'block';
+                    keypointsData = data.keypoints;
+
+                    // 填充基准关键点选项
+                    const baseSelect = document.getElementById('pose-base');
+                    baseSelect.innerHTML = '';
+                    data.keypoints.forEach((kp, index) => {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = `关键点 ${index}`;
+                        baseSelect.appendChild(option);
+                    });
+
+                    // 填充核心关键点复选框
+                    const coreKeypointsDiv = document.getElementById('core-keypoints');
+                    coreKeypointsDiv.innerHTML = '';
+                    data.keypoints.forEach((kp, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'form-check form-check-inline';
+                        div.innerHTML = `
+                            <input class="form-check-input" type="checkbox" id="kp-${index}" value="${index}">
+                            <label class="form-check-label" for="kp-${index}">
+                                关键点 ${index}
+                            </label>
+                        `;
+                        coreKeypointsDiv.appendChild(div);
+                    });
+                } else {
+                    alert('检测失败: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('检测失败: ' + error);
+            });
+        });
+
+        document.getElementById('pose-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('pose-name').value;
+            const index = document.getElementById('pose-index').value;
+            const base = document.getElementById('pose-base').value;
+            const coreKeypoints = Array.from(document.querySelectorAll('#core-keypoints input:checked')).map(cb => parseInt(cb.value));
+
+            if (!name || !index || !keypointsData) {
+                alert('请填写完整信息并先进行检测');
+                return;
+            }
+
+            const poseData = {
+                name: name,
+                index: parseInt(index),
+                base_keypoint: parseInt(base),
+                core_keypoints: coreKeypoints,
+                keypoints: keypointsData
+            };
+
+            fetch('/api/save_pose', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(poseData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('姿态模板保存成功');
+                } else {
+                    alert('保存失败: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('保存失败: ' + error);
+            });
+        });
+
+        document.getElementById('generate-config-btn').addEventListener('click', function() {
+            fetch('/api/generate_config', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('配置文件生成成功');
+                } else {
+                    alert('生成失败: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('生成失败: ' + error);
+            });
+        });
+
+        // 映射配置功能
+        let mappingData = [];
+
+        document.getElementById('generate-table-btn').addEventListener('click', function() {
+            fetch('/api/generate_mapping_table')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    mappingData = data.table;
+                    renderTable();
+                    updateSelectors();
+                } else {
+                    alert('生成表格失败: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('生成表格失败: ' + error);
+            });
+        });
+
+        document.getElementById('read-table-btn').addEventListener('click', function() {
+            fetch('/api/read_mapping_table')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    mappingData = data.table;
+                    renderTable();
+                    updateSelectors();
+                } else {
+                    alert('读取表格失败: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('读取表格失败: ' + error);
+            });
+        });
+
+        document.getElementById('save-table-btn').addEventListener('click', function() {
+            fetch('/api/save_mapping_table', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ table: mappingData })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('表格保存成功');
+                } else {
+                    alert('保存失败: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('保存失败: ' + error);
+            });
+        });
+
+        function renderTable() {
+            const tbody = document.querySelector('#mapping-table tbody');
+            tbody.innerHTML = '';
+
+            mappingData.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${row.action || ''}</td>
+                    <td>${row.key || ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateSelectors() {
+            const lineSelect = document.getElementById('table-line');
+            const actionSelect = document.getElementById('table-action');
+            const keySelect = document.getElementById('table-key');
+
+            lineSelect.innerHTML = '';
+            mappingData.forEach((row, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `行 ${index + 1}`;
+                lineSelect.appendChild(option);
+            });
+
+            // 这里应该从后端获取可用的动作和按键列表
+            // 暂时使用示例数据
+            actionSelect.innerHTML = '<option value="">选择动作</option><option value="click">点击</option><option value="move">移动</option>';
+            keySelect.innerHTML = '<option value="">选择按键</option><option value="left">左键</option><option value="right">右键</option>';
+        }
+
+        // 其他按钮事件可以根据需要添加
+        document.getElementById('add-action-btn').addEventListener('click', function() {
+            // 添加动作逻辑
+        });
+
+        document.getElementById('delete-action-btn').addEventListener('click', function() {
+            // 清空动作逻辑
+        });
+
+        document.getElementById('add-key-btn').addEventListener('click', function() {
+            // 添加按键逻辑
+        });
+
+        document.getElementById('delete-key-btn').addEventListener('click', function() {
+            // 清空按键逻辑
+        });
+
+        document.getElementById('new-line-btn').addEventListener('click', function() {
+            mappingData.push({ action: '', key: '' });
+            renderTable();
+            updateSelectors();
+        });
+
+        document.getElementById('delete-line-btn').addEventListener('click', function() {
+            const lineIndex = document.getElementById('table-line').value;
+            if (lineIndex !== '') {
+                mappingData.splice(parseInt(lineIndex), 1);
+                renderTable();
+                updateSelectors();
+            }
+        });
+    </script>
+</body>
+</html>

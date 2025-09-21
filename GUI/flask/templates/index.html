@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>实时姿态检测系统</title>
-    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -242,6 +242,104 @@
                 align-items: center;
             }
         }
+
+        .nav-links {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.3s ease;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .welcome-content {
+            text-align: center;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .feature-card p {
+            opacity: 0.8;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .system-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .system-info h2 {
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links a {
+                display: block;
+                margin: 5px 0;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -250,224 +348,61 @@
             <h1>🤖 实时姿态检测系统</h1>
             <p>基于浏览器的实时摄像头姿态检测与控制系统</p>
         </div>
-        
-        <div class="main-content">
-            <div class="video-section">
-                <div class="video-container">
-                    <img id="video-frame" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQwIiBoZWlnaHQ9IjQ4MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMzMzIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iI2NjYyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuetieW+heaRhOWDj+WktOWQr+WKqC4uLjwvdGV4dD48L3N2Zz4=" alt="视频流">
-                    <div class="video-overlay">
-                        <span class="status-indicator" id="connection-indicator"></span>
-                        <span id="connection-status">未连接</span> | FPS: <span id="fps-display">0</span>
-                    </div>
+
+        <div class="nav-links">
+            <a href="/" class="active">主页</a>
+            <a href="/realtime">实时检测</a>
+            <a href="/debug">调试工具</a>
+        </div>
+
+        <div class="welcome-content">
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📹</div>
+                    <h3>实时检测</h3>
+                    <p>使用摄像头进行实时人体姿态检测，支持多种姿态识别</p>
+                    <a href="/realtime" class="btn btn-primary">开始检测</a>
                 </div>
-                
-                <div class="controls">
-                    <button class="btn btn-primary" id="start-btn">启动摄像头</button>
-                    <button class="btn btn-danger" id="stop-btn" disabled>停止摄像头</button>
+                <div class="feature-card">
+                    <div class="feature-icon">🔧</div>
+                    <h3>调试工具</h3>
+                    <p>姿态检测调试、远程控制、映射配置等高级功能</p>
+                    <a href="/debug" class="btn btn-secondary">进入调试</a>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>统计监控</h3>
+                    <p>实时查看检测统计信息和系统性能指标</p>
+                    <a href="/realtime" class="btn btn-info">查看统计</a>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>参数配置</h3>
+                    <p>调整检测参数、控制命令发送等系统设置</p>
+                    <a href="/realtime" class="btn btn-success">配置参数</a>
                 </div>
             </div>
-            
-            <div class="sidebar">
-                <div class="panel">
-                    <h3>⚙️ 控制面板</h3>
-                    
-                    <div class="config-item">
-                        <label for="confidence-slider">置信度阈值: <span id="confidence-value">0.3</span></label>
-                        <input type="range" id="confidence-slider" min="0.1" max="1.0" step="0.1" value="0.3">
+
+            <div class="system-info">
+                <h2>系统信息</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>检测模型:</strong> OpenVINO Human Pose Estimation
                     </div>
-                    
-                    <div class="config-item">
-                        <label>
-                            <input type="checkbox" id="send-commands-checkbox">
-                            启用命令发送
-                        </label>
+                    <div class="info-item">
+                        <strong>支持格式:</strong> 17关键点姿态检测
                     </div>
-                    
-                    <div class="config-item">
-                        <label for="fps-slider">FPS限制: <span id="fps-value">30</span></label>
-                        <input type="range" id="fps-slider" min="10" max="60" step="5" value="30">
+                    <div class="info-item">
+                        <strong>实时性能:</strong> 30 FPS (可配置)
                     </div>
-                </div>
-                
-                <div class="panel">
-                    <h3>📊 实时统计</h3>
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <div class="stat-value" id="frames-processed">0</div>
-                            <div class="stat-label">处理帧数</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="poses-detected">0</div>
-                            <div class="stat-label">检测姿态</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="commands-sent">0</div>
-                            <div class="stat-label">发送命令</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="current-fps">0</div>
-                            <div class="stat-label">当前FPS</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="panel">
-                    <h3>🎯 检测结果</h3>
-                    <div class="detection-info">
-                        <div>姿态数量: <span id="poses-count">0</span></div>
-                        <div class="pose-state" id="pose-state">等待检测...</div>
-                    </div>
-                </div>
-                
-                <div class="panel" id="command-panel" style="display: none;">
-                    <h3>📜 命令历史</h3>
-                    <div class="command-log" id="command-log">
-                        <div class="command-item">等待命令...</div>
+                    <div class="info-item">
+                        <strong>通信协议:</strong> WebSocket + HTTP
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>
-        // Socket.IO连接
-        const socket = io();
-        
-        // UI元素
-        const videoFrame = document.getElementById('video-frame');
-        const startBtn = document.getElementById('start-btn');
-        const stopBtn = document.getElementById('stop-btn');
-        const connectionIndicator = document.getElementById('connection-indicator');
-        const connectionStatus = document.getElementById('connection-status');
-        const fpsDisplay = document.getElementById('fps-display');
-        
-        // 配置元素
-        const confidenceSlider = document.getElementById('confidence-slider');
-        const confidenceValue = document.getElementById('confidence-value');
-        const sendCommandsCheckbox = document.getElementById('send-commands-checkbox');
-        const fpsSlider = document.getElementById('fps-slider');
-        const fpsValue = document.getElementById('fps-value');
-        
-        // 统计元素
-        const framesProcessed = document.getElementById('frames-processed');
-        const posesDetected = document.getElementById('poses-detected');
-        const commandsSent = document.getElementById('commands-sent');
-        const currentFps = document.getElementById('current-fps');
-        
-        // 检测结果元素
-        const posesCount = document.getElementById('poses-count');
-        const poseState = document.getElementById('pose-state');
-        
-        // 命令历史元素
-        const commandPanel = document.getElementById('command-panel');
-        const commandLog = document.getElementById('command-log');
-        
-        // Socket事件处理
-        socket.on('connect', function() {
-            console.log('已连接到服务器');
-            connectionIndicator.className = 'status-indicator status-connected';
-            connectionStatus.textContent = '已连接';
-        });
-        
-        socket.on('disconnect', function() {
-            console.log('与服务器断开连接');
-            connectionIndicator.className = 'status-indicator status-disconnected';
-            connectionStatus.textContent = '已断开';
-        });
-        
-        socket.on('frame_update', function(data) {
-            // 更新视频帧
-            videoFrame.src = 'data:image/jpeg;base64,' + data.image;
-            
-            // 更新检测结果
-            posesCount.textContent = data.poses_count;
-            
-            if (data.state) {
-                poseState.textContent = JSON.stringify(data.state, null, 2);
-            } else {
-                poseState.textContent = '未检测到姿态';
-            }
-            
-            // 更新统计信息
-            if (data.stats) {
-                framesProcessed.textContent = data.stats.frames_processed;
-                posesDetected.textContent = data.stats.poses_detected;
-                commandsSent.textContent = data.stats.commands_sent;
-                currentFps.textContent = data.stats.current_fps;
-                fpsDisplay.textContent = data.stats.current_fps;
-            }
-        });
-        
-        socket.on('status', function(data) {
-            console.log('状态更新:', data.message);
-        });
-        
-        socket.on('error', function(data) {
-            console.error('错误:', data.message);
-            alert('错误: ' + data.message);
-        });
-        
-        // 按钮事件
-        startBtn.addEventListener('click', function() {
-            socket.emit('start_camera');
-            startBtn.disabled = true;
-            stopBtn.disabled = false;
-        });
-        
-        stopBtn.addEventListener('click', function() {
-            socket.emit('stop_camera');
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
-        });
-        
-        // 配置更新事件
-        confidenceSlider.addEventListener('input', function() {
-            confidenceValue.textContent = this.value;
-            updateConfig();
-        });
-        
-        sendCommandsCheckbox.addEventListener('change', function() {
-            commandPanel.style.display = this.checked ? 'block' : 'none';
-            updateConfig();
-        });
-        
-        fpsSlider.addEventListener('input', function() {
-            fpsValue.textContent = this.value;
-            updateConfig();
-        });
-        
-        function updateConfig() {
-            const config = {
-                confidence_threshold: parseFloat(confidenceSlider.value),
-                send_commands_enabled: sendCommandsCheckbox.checked,
-                fps_limit: parseInt(fpsSlider.value)
-            };
-            
-            socket.emit('update_config', config);
-        }
-        
-        // 定期获取命令历史
-        setInterval(function() {
-            if (sendCommandsCheckbox.checked) {
-                fetchCommandHistory();
-            }
-        }, 2000);
-        
-        function fetchCommandHistory() {
-            fetch('/api/commands?count=5')
-                .then(response => response.json())
-                .then(commands => {
-                    if (commands.length > 0) {
-                        commandLog.innerHTML = commands.map(cmd => 
-                            `<div class="command-item">
-                                ${new Date(cmd.timestamp * 1000).toLocaleTimeString()}: 
-                                ${cmd.command.substring(0, 16)}...
-                            </div>`
-                        ).join('');
-                    }
-                })
-                .catch(error => console.error('获取命令历史失败:', error));
-        }
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

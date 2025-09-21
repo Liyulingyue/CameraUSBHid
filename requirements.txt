@@ -1,7 +1,7 @@
 openvino
 numpy
 opencv-python
-fastdeploy-python
+# fastdeploy-python
 
 # GUI frameworks
 pyqt5
