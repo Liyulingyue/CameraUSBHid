@@ -27,6 +27,7 @@ class PoseDetectionService:
         self.current_state = None
         self.fps_counter = 0
         self.last_fps_time = time.time()
+        self.last_sent_state = None  # 上次发送的姿势状态，避免重复发送相同命令
 
         # 统计信息
         self.stats = {
@@ -48,6 +49,7 @@ class PoseDetectionService:
             poses, processed_frame = self.estimator.infer(frame, is_draw=True)
 
             state_name = None
+            words_list = []
 
             if poses is not None and len(poses) > 0:
                 # 转换为字典格式
@@ -59,7 +61,7 @@ class PoseDetectionService:
                 state_name = [s['name'] for s in state_dicts]  # 仅保留名称
                 
                 # 计算对应的按键
-                words_list = state2words(state)
+                words_list = state2words(state) or []
                 
                 self.current_state = state
                 self.current_poses = pose_dict
@@ -85,6 +87,10 @@ class PoseDetectionService:
     def _send_command(self, state):
         """发送控制命令"""
         try:
+            # 检查是否与上次发送的状态相同，避免重复发送
+            if self.last_sent_state == state:
+                return  # 相同状态，不重复发送
+
             # 转换状态为字节
             keyboard_bytes, mouse_actions = state2bytes(state)
             state_bytes = keyboard_bytes
@@ -94,6 +100,9 @@ class PoseDetectionService:
 
             # 发送命令
             result = send_command(server_ip=self.target_ip, command=command, timeout=1.0)
+
+            # 更新上次发送状态
+            self.last_sent_state = state
 
             # 记录命令历史
             command_info = {

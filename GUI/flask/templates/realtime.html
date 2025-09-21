@@ -392,7 +392,7 @@
                     </div>
                 </div>
                 
-                <div class="panel">
+                                <div class="panel" id="command-panel">
                     <h3>📊 实时统计</h3>
                     <div class="stats-grid">
                         <div class="stat-item">
@@ -412,6 +412,10 @@
                             <div class="stat-label">当前FPS</div>
                         </div>
                     </div>
+                    
+                    <div class="command-log" id="command-log">
+                        <!-- 命令历史将在这里显示 -->
+                    </div>
                 </div>
                 
                 <div class="panel">
@@ -428,6 +432,8 @@
                     <div class="panel">
                         <h3>⌨ 当前指令</h3>
                         <div class="detection-info">
+                            <div>姿态数量: <span id="poses-count-instruction">0</span></div>
+                            <div class="pose-state" id="pose-state-instruction">...</div>
                             <div id="current-instruction">...</div>
                         </div>
                     </div>

@@ -214,7 +214,8 @@ def register_routes(app, socketio):
             from UpperMachine.pose_estimation.bytes2command import bytes2command
             from UpperMachine.pose_estimation.state2bytes_vector import words2bytes
             
-            result = send_command(url, port, bytes2command(words2bytes(words)))
+            keyboard_bytes, mouse_actions = words2bytes(words)
+            result = send_command(url, port, bytes2command(keyboard_bytes))
             return jsonify({'status': 'success', 'result': str(result)})
         except Exception as e:
             return jsonify({'status': 'error', 'message': str(e)})

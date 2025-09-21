@@ -159,19 +159,27 @@
             const port = document.getElementById('mouse-port').value;
             const words = document.getElementById('mouse-words').value;
 
-            fetch(`http://${url}:${port}/`, {
+            fetch('/api/send_mouse', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Type': 'application/json',
                 },
-                body: `words=${encodeURIComponent(words)}`
+                body: JSON.stringify({
+                    url: url,
+                    port: parseInt(port),
+                    words: words
+                })
             })
-            .then(response => response.text())
+            .then(response => response.json())
             .then(data => {
-                alert('发送成功: ' + data);
+                if (data.status === 'success') {
+                    alert('发送成功: ' + data.result);
+                } else {
+                    alert('发送失败: ' + data.message);
+                }
             })
             .catch(error => {
-                alert('发送失败: ' + error);
+                alert('请求失败: ' + error);
             });
         });
     </script>
