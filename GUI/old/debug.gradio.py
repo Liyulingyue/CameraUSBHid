@@ -208,7 +208,7 @@ with gr.Blocks() as App:
         gr.Markdown("""
         本页面可以通过发送指令的方式控制远程鼠标
         """)
-        txt_url = gr.Textbox(label="远程鼠标调试地址", value="192.168.2.184")
+        txt_url = gr.Textbox(label="远程鼠标调试地址", value="192.168.2.121")
         txt_port = gr.Number(label="远程鼠标调试端口", value=80)
         txt_words = gr.Textbox(label="远程鼠标调试字符(自动补位-长度不够则自动补齐长度)", value="a")
         btn_send = gr.Button("发送")

@@ -8,8 +8,10 @@ import time
 from queue import Queue
 import numpy as np
 
-# 导入姿态检测相关模块
-from UpperMachine.pose_estimation.service import pose_service
+from UpperMachine.pose_estimation.PoseDetectionService import PoseDetectionService
+
+# 创建服务实例
+pose_service = PoseDetectionService()
 
 def register_routes(app, socketio):
     @app.route('/')
@@ -42,13 +44,17 @@ def register_routes(app, socketio):
             if 'fps_limit' in data:
                 pose_service.fps_limit = int(data['fps_limit'])
             
+            if 'target_ip' in data:
+                pose_service.target_ip = str(data['target_ip'])
+            
             return jsonify({'status': 'success'})
         
         else:
             return jsonify({
                 'confidence_threshold': pose_service.confidence_threshold,
                 'send_commands_enabled': pose_service.send_commands_enabled,
-                'fps_limit': pose_service.fps_limit
+                'fps_limit': pose_service.fps_limit,
+                'target_ip': pose_service.target_ip
             })
 
     @app.route('/api/stats')
@@ -100,10 +106,14 @@ def register_routes(app, socketio):
             if 'fps_limit' in data:
                 pose_service.fps_limit = int(data['fps_limit'])
             
+            if 'target_ip' in data:
+                pose_service.target_ip = str(data['target_ip'])
+            
             emit('config_updated', {
                 'confidence_threshold': pose_service.confidence_threshold,
                 'send_commands_enabled': pose_service.send_commands_enabled,
-                'fps_limit': pose_service.fps_limit
+                'fps_limit': pose_service.fps_limit,
+                'target_ip': pose_service.target_ip
             })
             
         except Exception as e:
@@ -188,7 +198,7 @@ def register_routes(app, socketio):
     @app.route('/api/send_mouse', methods=['POST'])
     def send_mouse():
         data = request.json
-        url = data.get('url', '192.168.2.184')
+        url = data.get('url', '192.168.2.121')
         port = data.get('port', 80)
         words = data.get('words', 'a')
         

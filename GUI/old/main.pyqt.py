@@ -23,7 +23,7 @@ model_path = "Source/Models/tinypose_128x96"
 device = "CPU"
 estimator = HumanPoseEstimator(model_path, device)
 
-server_ip = '192.168.2.184'
+server_ip = '192.168.2.121'
 port = 80
 
 # 假设的图像处理函数，返回一个整数 N

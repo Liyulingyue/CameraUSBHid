@@ -20,7 +20,7 @@ import socket
 
 IF_SEND_COMMAND = True # 是否发送命令
 DEBUG_FLAG = "undebug" # 调试模式，可选值："debug"、"undebug"
-server_ip = '192.168.2.184'
+server_ip = '192.168.2.121'
 port = 80
 last_command = ""
 WLAN_SSID = "****"
@@ -583,7 +583,7 @@ def bytes2command(data_list):
 
 
 
-def send_command(server_ip='192.168.2.184', port=80, command="", timeout=1, ifencode=False):
+def send_command(server_ip='192.168.2.121', port=80, command="", timeout=1, ifencode=False):
     global last_command
     if last_command == command:
         return

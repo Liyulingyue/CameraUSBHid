@@ -18,6 +18,7 @@ class PoseDetectionService:
         self.confidence_threshold = 0.3
         self.send_commands_enabled = False
         self.fps_limit = 30
+        self.target_ip = '192.168.2.121'  # 目标设备IP地址
 
         # 状态变量
         self.is_running = False
@@ -86,7 +87,7 @@ class PoseDetectionService:
             command = bytes2command(state_bytes)
 
             # 发送命令
-            result = send_command(command, timeout=1.0)
+            result = send_command(server_ip=self.target_ip, command=command, timeout=1.0)
 
             # 记录命令历史
             command_info = {

@@ -311,6 +311,11 @@
                         <label for="fps-slider">FPS限制: <span id="fps-value">30</span></label>
                         <input type="range" id="fps-slider" min="10" max="60" step="5" value="30">
                     </div>
+                    
+                    <div class="config-item">
+                        <label for="target-ip">目标IP地址:</label>
+                        <input type="text" id="target-ip" value="192.168.2.121" placeholder="192.168.2.121">
+                    </div>
                 </div>
                 
                 <div class="panel">
@@ -366,6 +371,7 @@
         const sendCommandsCheckbox = document.getElementById('send-commands-checkbox');
         const fpsSlider = document.getElementById('fps-slider');
         const fpsValue = document.getElementById('fps-value');
+        const targetIpInput = document.getElementById('target-ip');
         const framesProcessed = document.getElementById('frames-processed');
         const posesDetected = document.getElementById('poses-detected');
         const commandsSent = document.getElementById('commands-sent');
@@ -412,6 +418,16 @@
             alert('错误: ' + data.message);
         });
 
+        socket.on('config_updated', function(data) {
+            // 更新界面显示
+            confidenceSlider.value = data.confidence_threshold;
+            confidenceValue.textContent = data.confidence_threshold;
+            sendCommandsCheckbox.checked = data.send_commands_enabled;
+            fpsSlider.value = data.fps_limit;
+            fpsValue.textContent = data.fps_limit;
+            targetIpInput.value = data.target_ip;
+        });
+
         // 按钮事件
         startBtn.addEventListener('click', function() {
             socket.emit('start_camera');
@@ -441,11 +457,16 @@
             updateConfig();
         });
 
+        targetIpInput.addEventListener('input', function() {
+            updateConfig();
+        });
+
         function updateConfig() {
             const config = {
                 confidence_threshold: parseFloat(confidenceSlider.value),
                 send_commands_enabled: sendCommandsCheckbox.checked,
-                fps_limit: parseInt(fpsSlider.value)
+                fps_limit: parseInt(fpsSlider.value),
+                target_ip: targetIpInput.value
             };
 
             socket.emit('update_config', config);

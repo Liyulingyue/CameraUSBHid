@@ -6,7 +6,7 @@ last_command = ""
 
 
 # 使用ESP32Cam作为服务器，端口为80，服务器只会接收一次，然后就断开，不会保持连接，所以每次都需要创建一个socket
-def send_command(server_ip='192.168.2.184', port=80, command="", ifencode=False):
+def send_command(server_ip='192.168.2.121', port=80, command="", ifencode=False):
     global last_command
     if last_command == command:
         return
@@ -25,7 +25,7 @@ def send_command(server_ip='192.168.2.184', port=80, command="", ifencode=False)
         # 关闭套接字
         sock.close()
 
-def send_command_timeout(server_ip='192.168.2.184', port=80, command="", timeout=1, ifencode=False):
+def send_command_timeout(server_ip='192.168.2.121', port=80, command="", timeout=1, ifencode=False):
     global last_command
     if last_command == command:
         return
