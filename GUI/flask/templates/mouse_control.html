@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>鼠标远程控制 - 姿态检测系统</title>
+    <title>键鼠远程控制 - 姿态检测系统</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -114,22 +114,35 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🖱️ 鼠标远程控制</h1>
-            <p>通过发送指令控制远程鼠标</p>
+            <h1>⌨️🖱️ 键鼠远程控制</h1>
+            <p>通过发送指令控制远程键盘和鼠标</p>
         </div>
 
         <div class="nav-links">
             <a href="/">主页</a>
             <a href="/realtime">实时检测</a>
-            <a href="/mouse_control" class="active">鼠标控制</a>
+            <a href="/mouse_control" class="active">键鼠远程控制</a>
             <a href="/pose_recorder">姿势录制</a>
         </div>
 
         <div class="control-container">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">鼠标远程控制</h5>
-                    <p class="card-text">通过发送指令控制远程鼠标</p>
+                    <h5 class="card-title">键鼠远程控制</h5>
+                    <p class="card-text">通过发送指令控制远程键盘和鼠标</p>
+
+                    <!-- 鼠标调试 -->
+                    <div class="mb-3">
+                        <label class="form-label">鼠标调试</label>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="button" class="btn btn-primary" id="btn-left-click" style="font-size: 1.1em; padding: 10px 20px;">左键</button>
+                            <button type="button" class="btn btn-primary" id="btn-left-press" style="font-size: 1.1em; padding: 10px 20px;">按下左键</button>
+                            <button type="button" class="btn btn-primary" id="btn-left-release" style="font-size: 1.1em; padding: 10px 20px;">释放左键</button>
+                            <button type="button" class="btn btn-primary" id="btn-move-left" style="font-size: 1.1em; padding: 10px 20px;">左移</button>
+                            <button type="button" class="btn btn-primary" id="btn-move-right" style="font-size: 1.1em; padding: 10px 20px;">右移</button>
+                        </div>
+                    </div>
+
                     <form id="mouse-form">
                         <div class="mb-3">
                             <label for="mouse-url" class="form-label">远程鼠标调试地址</label>
@@ -140,11 +153,25 @@
                             <input type="number" class="form-control" id="mouse-port" value="80" required>
                         </div>
                         <div class="mb-3">
-                            <label for="mouse-words" class="form-label">远程鼠标调试字符</label>
-                            <input type="text" class="form-control" id="mouse-words" value="a" required>
+                            <label for="mouse-words" class="form-label">键盘/鼠标调试字符</label>
+                            <input type="text" class="form-control" id="mouse-words" value="a" placeholder="a 或 left_click 等" required>
                         </div>
                         <button type="submit" class="btn btn-primary">发送</button>
                     </form>
+
+                    <!-- 调试信息显示区域 -->
+                    <div id="debug-info" class="mt-3 p-3 bg-dark text-light rounded" style="display: none;">
+                        <h6>最近发送的命令:</h6>
+                        <div id="last-command" class="mb-2">
+                            <strong>命令:</strong> <span id="last-command-text">-</span>
+                        </div>
+                        <div id="last-hex">
+                            <strong>十六进制:</strong> <span id="last-hex-text">-</span>
+                        </div>
+                        <div id="last-target" class="mt-2 text-muted">
+                            <small>目标: <span id="last-target-text">-</span></small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -159,6 +186,41 @@
             const port = document.getElementById('mouse-port').value;
             const words = document.getElementById('mouse-words').value;
 
+            sendMouseCommand(url, port, words);
+        });
+
+        // 快捷按钮事件
+        document.getElementById('btn-left-click').addEventListener('click', function() {
+            const url = document.getElementById('mouse-url').value;
+            const port = document.getElementById('mouse-port').value;
+            sendMouseCommand(url, port, 'left_click');
+        });
+
+        document.getElementById('btn-left-press').addEventListener('click', function() {
+            const url = document.getElementById('mouse-url').value;
+            const port = document.getElementById('mouse-port').value;
+            sendMouseCommand(url, port, 'mouse_left_click');
+        });
+
+        document.getElementById('btn-left-release').addEventListener('click', function() {
+            const url = document.getElementById('mouse-url').value;
+            const port = document.getElementById('mouse-port').value;
+            sendMouseCommand(url, port, 'mouse_left_release');
+        });
+
+        document.getElementById('btn-move-left').addEventListener('click', function() {
+            const url = document.getElementById('mouse-url').value;
+            const port = document.getElementById('mouse-port').value;
+            sendMouseCommand(url, port, 'move_left');
+        });
+
+        document.getElementById('btn-move-right').addEventListener('click', function() {
+            const url = document.getElementById('mouse-url').value;
+            const port = document.getElementById('mouse-port').value;
+            sendMouseCommand(url, port, 'move_right');
+        });
+
+        function sendMouseCommand(url, port, words) {
             fetch('/api/send_mouse', {
                 method: 'POST',
                 headers: {
@@ -173,6 +235,12 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
+                    // 更新调试信息显示
+                    document.getElementById('last-command-text').textContent = words;
+                    document.getElementById('last-hex-text').textContent = data.hex || 'N/A';
+                    document.getElementById('last-target-text').textContent = `${url}:${port}`;
+                    document.getElementById('debug-info').style.display = 'block';
+                    
                     alert('发送成功: ' + data.result);
                 } else {
                     alert('发送失败: ' + data.message);
@@ -181,7 +249,7 @@
             .catch(error => {
                 alert('请求失败: ' + error);
             });
-        });
+        }
     </script>
 </body>
 </html>

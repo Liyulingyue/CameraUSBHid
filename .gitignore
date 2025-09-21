@@ -2,8 +2,6 @@ __pycache__/
 .venv/
 .idea/
 .vscode/
-Source/
-!Source/.gitkeep
+Source/Models/
 !Source/Models/.gitkeep
-!Source/Images/
 venv/

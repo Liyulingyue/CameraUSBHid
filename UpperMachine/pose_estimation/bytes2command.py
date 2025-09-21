@@ -39,9 +39,9 @@ def bytes2command(data_list):
     return packet
 
 
-def mouse2command(action):
+def mouse2command(action, x=0, y=0):
     """
-    根据鼠标动作生成完整的 USB 鼠标命令包
+    根据鼠标动作和坐标生成完整的 USB 鼠标命令包
     数据包格式：
     - 帧头 (2字节): 0x57, 0xAB
     - 地址 (1字节): 0x00
@@ -55,8 +55,8 @@ def mouse2command(action):
 
     # 初始化默认值
     button_value = 0x00  # 鼠标按键值
-    x_axis = 0x0000  # X轴坐标值
-    y_axis = 0x0000  # Y轴坐标值
+    x_axis = x & 0xFFFF  # X轴坐标值，限制为16位
+    y_axis = y & 0xFFFF  # Y轴坐标值，限制为16位
     wheel = 0x00  # 滚轮滚动齿数
 
     # 根据动作类型设置数据包内容

@@ -209,15 +209,67 @@ def register_routes(app, socketio):
         port = data.get('port', 80)
         words = data.get('words', 'a')
         
+        print(f"[DEBUG] send_mouse called with url={url}, port={port}, words={words}")
+        
         try:
             from UpperMachine.pose_estimation.sendcommand import send_command_timeout as send_command
-            from UpperMachine.pose_estimation.bytes2command import bytes2command
+            from UpperMachine.pose_estimation.bytes2command import bytes2command, mouse2command
             from UpperMachine.pose_estimation.state2bytes_vector import words2bytes
             
-            keyboard_bytes, mouse_actions = words2bytes(words)
-            result = send_command(url, port, bytes2command(keyboard_bytes))
-            return jsonify({'status': 'success', 'result': str(result)})
+            if words == 'left_click':
+                print("[DEBUG] Sending left click: press and release")
+                # 左键点击：按下 + 释放
+                cmd1 = mouse2command(-1)
+                cmd2 = mouse2command(-2)
+                send_command(url, port, cmd1)
+                send_command(url, port, cmd2)
+                hex_data = f"{cmd1.hex()} + {cmd2.hex()}"
+                return jsonify({'status': 'success', 'result': 'Left click sent', 'hex': hex_data})
+            elif words == 'mouse_left_click':
+                print("[DEBUG] Sending left press")
+                cmd = mouse2command(-1)
+                send_command(url, port, cmd)
+                return jsonify({'status': 'success', 'result': 'Left press sent', 'hex': cmd.hex()})
+            elif words == 'mouse_left_release':
+                print("[DEBUG] Sending left release")
+                cmd = mouse2command(-2)
+                send_command(url, port, cmd)
+                return jsonify({'status': 'success', 'result': 'Left release sent', 'hex': cmd.hex()})
+            elif words == 'move_left':
+                print("[DEBUG] Sending move left: x=-10, y=0")
+                # 左移光标：x=-10, y=0
+                cmd = mouse2command(0, -10, 0)
+                send_command(url, port, cmd)
+                return jsonify({'status': 'success', 'result': 'Move left sent', 'hex': cmd.hex()})
+            elif words == 'move_right':
+                print("[DEBUG] Sending move right: x=10, y=0")
+                # 右移光标：x=10, y=0
+                cmd = mouse2command(0, 10, 0)
+                send_command(url, port, cmd)
+                return jsonify({'status': 'success', 'result': 'Move right sent', 'hex': cmd.hex()})
+            else:
+                print(f"[DEBUG] Processing general words: {words}")
+                # 默认键盘或鼠标动作
+                keyboard_bytes, mouse_actions = words2bytes(words)
+                print(f"[DEBUG] keyboard_bytes: {keyboard_bytes}, mouse_actions: {mouse_actions}")
+                
+                hex_commands = []
+                if keyboard_bytes:
+                    command = bytes2command(keyboard_bytes)
+                    print(f"[DEBUG] Sending keyboard command: {command.hex()}")
+                    send_command(url, port, command)
+                    hex_commands.append(f"KB:{command.hex()}")
+                
+                for action in mouse_actions:
+                    command = mouse2command(action)
+                    print(f"[DEBUG] Sending mouse command for action {action}: {command.hex()}")
+                    send_command(url, port, command)
+                    hex_commands.append(f"MS:{command.hex()}")
+                
+                hex_data = " | ".join(hex_commands) if hex_commands else "No commands"
+                return jsonify({'status': 'success', 'result': f'Sent keyboard/mouse: {words}', 'hex': hex_data})
         except Exception as e:
+            print(f"[ERROR] send_mouse failed: {str(e)}")
             return jsonify({'status': 'error', 'message': str(e)})
 
     @app.route('/api/detect_pose', methods=['POST'])
