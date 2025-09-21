@@ -22,7 +22,7 @@ def calculate_cosine_similarity(v1, v2):
     return cosine_similarity
 
 
-def posedict2state(keypoints, type="undebug"):
+def posedict2state(keypoints):
     states = []
 
     for pose_template in config_list:
@@ -44,9 +44,9 @@ def posedict2state(keypoints, type="undebug"):
         similarity = calculate_cosine_similarity(v_template, v_keypoints)
 
         if (pose_index not in [3, 4]) and similarity >= 0.95:
-            states.append(pose_index if type == "undebug" else pose_name)
+            states.append({'index': pose_index, 'name': pose_name})
         elif similarity >=0.975:
-            states.append(pose_index if type == "undebug" else pose_name)
+            states.append({'index': pose_index, 'name': pose_name})
 
 
     return states

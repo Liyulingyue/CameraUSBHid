@@ -2,7 +2,7 @@ import time
 
 from UpperMachine.pose_estimation.ov.Estimator import HumanPoseEstimator
 from UpperMachine.pose_estimation.posedict2state_vector import posedict2state
-from UpperMachine.pose_estimation.state2bytes_vector import state2bytes
+from UpperMachine.pose_estimation.state2bytes_vector import state2bytes, state2words
 from UpperMachine.pose_estimation.bytes2command import bytes2command
 from UpperMachine.pose_estimation.sendcommand import send_command_timeout as send_command
 
@@ -47,14 +47,20 @@ class PoseDetectionService:
             # 姿态检测
             poses, processed_frame = self.estimator.infer(frame, is_draw=True)
 
-            state = None
+            state_name = None
 
             if poses is not None and len(poses) > 0:
                 # 转换为字典格式
                 pose_dict = self.estimator.pose2dict(poses)
 
                 # 转换为状态
-                state = posedict2state(pose_dict)
+                state_dicts = posedict2state(pose_dict)
+                state = [s['index'] for s in state_dicts]  # 仅保留索引
+                state_name = [s['name'] for s in state_dicts]  # 仅保留名称
+                
+                # 计算对应的按键
+                words_list = state2words(state)
+                
                 self.current_state = state
                 self.current_poses = pose_dict
 
@@ -70,11 +76,11 @@ class PoseDetectionService:
             # 计算FPS
             self._update_fps()
 
-            return processed_frame, state, poses
+            return processed_frame, state_name, poses, words_list
 
         except Exception as e:
             print(f"帧处理错误: {e}")
-            return frame, None, None
+            return frame, None, None, None
 
     def _send_command(self, state):
         """发送控制命令"""

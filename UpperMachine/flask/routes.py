@@ -147,7 +147,7 @@ def register_routes(app, socketio):
                 frame = cv2.flip(frame, 1)
                 
                 # 处理帧
-                processed_frame, state, poses = pose_service.process_frame(frame)
+                processed_frame, state, poses, words_list = pose_service.process_frame(frame)
                 
                 # 安全检查processed_frame
                 if processed_frame is None:
@@ -175,6 +175,7 @@ def register_routes(app, socketio):
                         'image': frame_base64,
                         'state': state,
                         'poses_count': poses_count,
+                        'instruction': words_list,
                         'stats': pose_service.get_stats()
                     })
                 except Exception as e:

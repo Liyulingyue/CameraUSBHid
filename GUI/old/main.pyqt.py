@@ -30,7 +30,7 @@ port = 80
 def process_frame(poses):
     if len(poses) == 0:
         return ""
-    gesture_list = posedict2state(poses, type=DEBUG_FLAG)
+    gesture_list = [s['index'] for s in posedict2state(poses)]
     bytes_list = state2bytes(gesture_list)
     command = bytes2command(bytes_list)
     if IF_SEND_COMMAND:
