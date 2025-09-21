@@ -56,9 +56,7 @@ def fn_btn_save(img_raw, name, index, basekeypoints, list_corekeypoints):
 def fn_btn_generate_config():
     raw_info_path = "Source/RawInfo"
     config_path = "Source/configs.json"
-    id_path = "Source/id.json"
     configs = []
-    id_list = {}
     for file_name in os.listdir(raw_info_path):
         if not file_name.endswith(".json"): continue
         info = json.load(open(os.path.join(raw_info_path, file_name)))
@@ -69,9 +67,7 @@ def fn_btn_generate_config():
             'list_corekeypoints': info['list_corekeypoints'],
             'value_dict': info['value_dict']
         })
-        id_list[info['index']] = info['name']
     json.dump(configs, open(config_path, 'w'), indent=4)
-    json.dump(id_list, open(id_path, 'w'), indent=4)
 
 # 生成表格数据
 def fn_generate_table():

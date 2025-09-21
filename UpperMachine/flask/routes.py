@@ -9,6 +9,7 @@ from queue import Queue
 import numpy as np
 
 from UpperMachine.pose_estimation.PoseDetectionService import PoseDetectionService
+from UpperMachine.utils import convert_numpy_to_list
 
 # 创建服务实例
 pose_service = PoseDetectionService()
@@ -24,10 +25,15 @@ def register_routes(app, socketio):
         """实时检测页面"""
         return render_template('realtime.html')
 
-    @app.route('/debug')
-    def debug():
-        """调试工具页面"""
-        return render_template('debug.html')
+    @app.route('/mouse_control')
+    def mouse_control():
+        """鼠标远程控制页面"""
+        return render_template('mouse_control.html')
+
+    @app.route('/pose_recorder')
+    def pose_recorder():
+        """姿势录制与配置页面"""
+        return render_template('pose_recorder.html')
 
     @app.route('/api/config', methods=['GET', 'POST'])
     def config():
@@ -238,10 +244,256 @@ def register_routes(app, socketio):
         except Exception as e:
             return jsonify({'status': 'error', 'message': str(e)})
 
+    @app.route('/api/detect_keypoints_batch', methods=['POST'])
+    def detect_keypoints_batch():
+        """批量检测关键点"""
+        try:
+            print("=== 开始批量检测关键点 ===")
+            data = request.json
+            frames = data.get('frames', [])
+            print(f"接收到 {len(frames)} 帧数据")
+
+            results = {}
+            for i, frame_data in enumerate(frames):
+                print(f"处理第 {i+1} 帧，索引: {frame_data.get('index', 'unknown')}")
+                try:
+                    # 解码base64图像
+                    img_data_str = frame_data['imageData']
+                    print(f"图像数据长度: {len(img_data_str)}")
+                    if ',' in img_data_str:
+                        img_data = base64.b64decode(img_data_str.split(',')[1])
+                    else:
+                        img_data = base64.b64decode(img_data_str)
+                    print(f"解码后数据长度: {len(img_data)}")
+
+                    nparr = np.frombuffer(img_data, np.uint8)
+                    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                    print(f"图像解码成功，尺寸: {img.shape if img is not None else 'None'}")
+
+                    if img is None:
+                        print("图像解码失败")
+                        results[frame_data['index']] = {}
+                        continue
+
+                    # 确保送入检测的图像为“镜像方向”
+                    # 规则：前端如未镜像帧内容（frame_data.mirrored 为 False 或缺失），后端在此进行水平翻转
+                    mirrored_flag = frame_data.get('mirrored', False)
+                    if not mirrored_flag:
+                        img = cv2.flip(img, 1)  # 1: 水平翻转
+
+                    # 检测关键点
+                    print("开始检测关键点...")
+                    poses, _ = pose_service.estimator.infer(img, is_draw=False)
+                    print(f"检测结果: poses = {poses}")
+
+                    if poses is not None and len(poses) > 0:
+                        print(f"检测到 {len(poses)} 个姿势")
+                        # 转换为字典格式
+                        keypoints_dict = pose_service.estimator.pose2dict(poses)
+                        print(f"关键点字典: {keypoints_dict}")
+
+                        # 将numpy数组转换为Python列表，确保JSON序列化
+                        keypoints_dict = convert_numpy_to_list(keypoints_dict)
+                        print(f"转换后关键点字典: {keypoints_dict}")
+                        results[frame_data['index']] = keypoints_dict
+                    else:
+                        print("未检测到姿势")
+                        results[frame_data['index']] = {}
+
+                except Exception as frame_error:
+                    print(f"处理第 {i+1} 帧时出错: {str(frame_error)}")
+                    results[frame_data['index']] = {}
+
+            print(f"批量检测完成，共处理 {len(results)} 帧")
+            print(f"返回结果: {results}")
+            return jsonify({'success': True, 'keypoints': results})
+        except Exception as e:
+            print(f"批量检测关键点出错: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'success': False, 'message': str(e)})
+
     @app.route('/api/save_pose', methods=['POST'])
     def save_pose():
-        data = request.json
-        # 实现保存逻辑，类似debug.gradio.py的fn_btn_save
-        # 这里需要img_raw，但前端需要发送base64或重新上传
-        # 简化版
-        return jsonify({'status': 'success'})
+        """保存姿势配置"""
+        try:
+            data = request.json
+            # 规范化 pose_img 字段（可选）
+            pose_img = (data.get('pose_img') or '').strip()
+            if pose_img:
+                # 如果是以 /static/ 开头，去掉该前缀
+                if pose_img.startswith('/static/'):
+                    pose_img = pose_img[len('/static/'):]
+                # 允许传入 Images/xxx 或 Source/Images/xxx 或仅文件名
+                if pose_img.startswith('Images/'):
+                    pose_img = pose_img[len('Images/'):]
+                elif pose_img.startswith('Source/Images/'):
+                    pose_img = pose_img[len('Source/Images/'):]
+                else:
+                    # 如果包含路径，仅保留文件名
+                    if '/' in pose_img:
+                        pose_img = pose_img.split('/')[-1]
+                # 最终统一保存为 Source/Images/<filename>
+                pose_img = f"Source/Images/{pose_img}"
+            data['pose_img'] = pose_img
+            
+            # 读取现有配置
+            with open('Source/configs.json', 'r', encoding='utf-8') as f:
+                configs = json.load(f)
+            
+            # 检查是否已存在相同索引的姿势
+            existing_index = None
+            for i, pose in enumerate(configs):
+                if pose['index'] == data['index']:
+                    existing_index = i
+                    break
+            
+            # 更新或添加姿势
+            if existing_index is not None:
+                # 如果没有传 pose_img，保留原有值
+                if not data.get('pose_img') and configs[existing_index].get('pose_img'):
+                    data['pose_img'] = configs[existing_index]['pose_img']
+                configs[existing_index] = data
+            else:
+                # 新姿势：pose_img 字段已在前面归一化
+                configs.append(data)
+            
+            # 按索引排序
+            configs.sort(key=lambda x: x['index'])
+            
+            # 保存配置
+            with open('Source/configs.json', 'w', encoding='utf-8') as f:
+                json.dump(configs, f, indent=4, ensure_ascii=False)
+            
+            return jsonify({'success': True, 'message': '姿势保存成功'})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)})
+
+    @app.route('/api/delete_pose', methods=['POST'])
+    def delete_pose_post():
+        """删除指定索引的姿势配置"""
+        try:
+            data = request.json or {}
+            if 'index' not in data:
+                return jsonify({'success': False, 'message': '缺少 index 参数'})
+
+            target_index = data['index']
+
+            # 读取现有配置
+            with open('Source/configs.json', 'r', encoding='utf-8') as f:
+                configs = json.load(f)
+
+            # 查找并删除
+            new_configs = [p for p in configs if p.get('index') != target_index]
+
+            if len(new_configs) == len(configs):
+                return jsonify({'success': False, 'message': f'未找到索引为 {target_index} 的姿势'})
+
+            # 保存更新后的配置
+            new_configs.sort(key=lambda x: x['index'])
+            with open('Source/configs.json', 'w', encoding='utf-8') as f:
+                json.dump(new_configs, f, indent=4, ensure_ascii=False)
+
+            return jsonify({'success': True, 'message': '删除成功'})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)})
+
+    @app.route('/api/get_poses')
+    def get_poses():
+        """获取所有姿势"""
+        try:
+            with open('Source/configs.json', 'r', encoding='utf-8') as f:
+                configs = json.load(f)
+            return jsonify(configs)
+        except Exception as e:
+            return jsonify([])
+
+    @app.route('/api/get_pose/<int:pose_index>')
+    def get_pose(pose_index):
+        """获取特定姿势"""
+        try:
+            with open('Source/configs.json', 'r', encoding='utf-8') as f:
+                configs = json.load(f)
+            
+            for pose in configs:
+                if pose['index'] == pose_index:
+                    return jsonify(pose)
+            
+            return jsonify({'error': '姿势不存在'}), 404
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/delete_pose/<int:pose_index>', methods=['DELETE'])
+    def delete_pose(pose_index):
+        """删除姿势"""
+        try:
+            # 读取现有配置
+            with open('Source/configs.json', 'r', encoding='utf-8') as f:
+                configs = json.load(f)
+            
+            # 找到并删除姿势
+            new_configs = [pose for pose in configs if pose['index'] != pose_index]
+            
+            if len(new_configs) == len(configs):
+                return jsonify({'success': False, 'message': '姿势不存在'})
+            
+            # 保存配置
+            with open('Source/configs.json', 'w', encoding='utf-8') as f:
+                json.dump(new_configs, f, indent=4, ensure_ascii=False)
+            
+            return jsonify({'success': True, 'message': '姿势删除成功'})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)})
+
+
+    @app.route('/api/render_keypoints', methods=['POST'])
+    def render_keypoints():
+        """渲染带有关键点的图像"""
+        try:
+            data = request.json
+            frame_data = data.get('frame', {})
+            
+            if not frame_data or 'imageData' not in frame_data:
+                return jsonify({'success': False, 'message': '缺少图像数据'})
+            
+            # 解码base64图像
+            img_data_str = frame_data['imageData']
+            if ',' in img_data_str:
+                img_data = base64.b64decode(img_data_str.split(',')[1])
+            else:
+                img_data = base64.b64decode(img_data_str)
+            
+            nparr = np.frombuffer(img_data, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            
+            if img is None:
+                return jsonify({'success': False, 'message': '图像解码失败'})
+            
+            # 根据前端标记，保证送入绘制的是镜像方向
+            mirrored_flag = frame_data.get('mirrored', False)
+            if not mirrored_flag:
+                img = cv2.flip(img, 1)
+
+            # 使用estimator进行检测并绘制关键点
+            poses, processed_frame = pose_service.estimator.infer(img, is_draw=True)
+            
+            if processed_frame is not None:
+                # 将处理后的图像编码为base64
+                _, buffer = cv2.imencode('.jpg', processed_frame)
+                img_base64 = base64.b64encode(buffer).decode('utf-8')
+                img_data_url = f'data:image/jpeg;base64,{img_base64}'
+                
+                return jsonify({
+                    'success': True, 
+                    'imageData': img_data_url,
+                    'hasPoses': poses is not None and len(poses) > 0
+                })
+            else:
+                return jsonify({'success': False, 'message': '关键点渲染失败'})
+                
+        except Exception as e:
+            print(f"渲染关键点出错: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'success': False, 'message': str(e)})
+

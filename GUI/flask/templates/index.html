@@ -266,39 +266,131 @@
             text-align: center;
         }
 
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
+        .project-intro {
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
-        .feature-card {
+        .intro-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .intro-section h2 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .intro-text {
+            font-size: 1.1em;
+            line-height: 1.6;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .tech-stack, .architecture, .features {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 15px;
             padding: 25px;
+            margin-bottom: 25px;
             backdrop-filter: blur(10px);
+        }
+
+        .tech-stack h3, .architecture h3, .features h3 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .tech-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
             transition: transform 0.3s ease;
         }
 
-        .feature-card:hover {
-            transform: translateY(-5px);
+        .tech-item:hover {
+            transform: translateY(-3px);
         }
 
-        .feature-icon {
-            font-size: 3em;
-            margin-bottom: 15px;
-        }
-
-        .feature-card h3 {
+        .tech-icon {
+            font-size: 2.5em;
             margin-bottom: 10px;
-            font-size: 1.3em;
         }
 
-        .feature-card p {
+        .tech-item h4 {
+            margin-bottom: 8px;
+            font-size: 1.2em;
+        }
+
+        .tech-item p {
             opacity: 0.8;
-            margin-bottom: 20px;
-            line-height: 1.5;
+            font-size: 0.9em;
+        }
+
+        .arch-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .arch-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px 20px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .arch-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #4CAF50;
+        }
+
+        .arch-desc {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .arch-arrow {
+            font-size: 1.5em;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .features-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 0.95em;
+        }
+
+        .feature-bullet {
+            font-size: 1.2em;
+            margin-right: 10px;
         }
 
         .system-info {
@@ -332,7 +424,20 @@
                 margin: 5px 0;
             }
 
-            .feature-grid {
+            .tech-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .arch-diagram {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .arch-arrow {
+                transform: rotate(90deg);
+            }
+
+            .features-list {
                 grid-template-columns: 1fr;
             }
 
@@ -345,41 +450,102 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 实时姿态检测系统</h1>
-            <p>基于浏览器的实时摄像头姿态检测与控制系统</p>
+            <h1>🤖 CameraUSBHid</h1>
+            <p>基于姿态检测的体感输入器系统</p>
         </div>
 
         <div class="nav-links">
             <a href="/" class="active">主页</a>
             <a href="/realtime">实时检测</a>
-            <a href="/debug">调试工具</a>
+            <a href="/mouse_control">鼠标控制</a>
+            <a href="/pose_recorder">姿势录制</a>
         </div>
 
         <div class="welcome-content">
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">📹</div>
-                    <h3>实时检测</h3>
-                    <p>使用摄像头进行实时人体姿态检测，支持多种姿态识别</p>
-                    <a href="/realtime" class="btn btn-primary">开始检测</a>
+            <div class="project-intro">
+                <div class="intro-section">
+                    <h2>🎯 项目简介</h2>
+                    <p class="intro-text">
+                        CameraUSBHid 是一个基于微控制器和姿态检测的体感输入器系统。
+                        通过摄像头实时检测人体姿态信息，并通过USB HID协议发送到PC端，
+                        实现用身体姿态控制键盘和鼠标的体感输入体验。
+                    </p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔧</div>
-                    <h3>调试工具</h3>
-                    <p>姿态检测调试、远程控制、映射配置等高级功能</p>
-                    <a href="/debug" class="btn btn-secondary">进入调试</a>
+
+                <div class="tech-stack">
+                    <h3>🛠️ 技术栈</h3>
+                    <div class="tech-grid">
+                        <div class="tech-item">
+                            <div class="tech-icon">🤖</div>
+                            <h4>OpenVINO</h4>
+                            <p>高效的人体姿态检测模型</p>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">🐍</div>
+                            <h4>Python</h4>
+                            <p>主要开发语言</p>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">🔌</div>
+                            <h4>MicroPython</h4>
+                            <p>微控制器编程</p>
+                        </div>
+                        <div class="tech-item">
+                            <div class="tech-icon">🌐</div>
+                            <h4>Web技术</h4>
+                            <p>Flask + Socket.IO</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>统计监控</h3>
-                    <p>实时查看检测统计信息和系统性能指标</p>
-                    <a href="/realtime" class="btn btn-info">查看统计</a>
+
+                <div class="architecture">
+                    <h3>🏗️ 系统架构</h3>
+                    <div class="arch-diagram">
+                        <div class="arch-item">
+                            <div class="arch-title">上位机 (PC)</div>
+                            <div class="arch-desc">姿态检测 + Web界面</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-item">
+                            <div class="arch-title">下位机 (MCU)</div>
+                            <div class="arch-desc">ESP32/Raspberry Pi Pico</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-item">
+                            <div class="arch-title">HID设备</div>
+                            <div class="arch-desc">CH9329串口转HID</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">⚙️</div>
-                    <h3>参数配置</h3>
-                    <p>调整检测参数、控制命令发送等系统设置</p>
-                    <a href="/realtime" class="btn btn-success">配置参数</a>
+
+                <div class="features">
+                    <h3>✨ 核心特性</h3>
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <span class="feature-bullet">🎥</span>
+                            <span>实时姿态检测 (30 FPS)</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-bullet">🖱️</span>
+                            <span>体感鼠标控制</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-bullet">⌨️</span>
+                            <span>姿态映射键盘输入</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-bullet">🔧</span>
+                            <span>可配置姿态模板</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-bullet">🌐</span>
+                            <span>Web界面调试</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-bullet">📱</span>
+                            <span>跨平台兼容</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 

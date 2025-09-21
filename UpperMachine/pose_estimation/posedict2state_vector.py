@@ -26,6 +26,8 @@ def posedict2state(keypoints):
     states = []
 
     for pose_template in config_list:
+        if pose_template.get("inner_flag", False):
+            continue
         pose_name = pose_template["name"]
         pose_base = pose_template["basekeypoints"]
         pose_index = pose_template["index"]
@@ -43,10 +45,27 @@ def posedict2state(keypoints):
         # 计算向量夹角
         similarity = calculate_cosine_similarity(v_template, v_keypoints)
 
-        if (pose_index not in [3, 4]) and similarity >= 0.95:
-            states.append({'index': pose_index, 'name': pose_name})
-        elif similarity >=0.975:
+        threshold = pose_template.get("similarity_threshold", 0.95)
+        if similarity >= threshold:
             states.append({'index': pose_index, 'name': pose_name})
 
+
+    # 硬代码检测弯腰动作（仅当LeftLean且RightLean的inner_flag为True时激活）
+    has_left_lean = any(p.get("name") == "LeftLean" and p.get("inner_flag", False) for p in config_list)
+    has_right_lean = any(p.get("name") == "RightLean" and p.get("inner_flag", False) for p in config_list)
+    
+    if has_left_lean and has_right_lean:
+        mid_shoulder = (keypoints['left_shoulder'] + keypoints['right_shoulder']) / 2
+        mid_hip = (keypoints['left_hip'] + keypoints['right_hip']) / 2
+        vec = mid_shoulder - mid_hip
+        angle = np.arctan2(vec[1], vec[0]) * 180 / np.pi
+        # 计算相对于垂直线的倾斜角度
+        vertical_angle = -90  # 垂直向下
+        tilt_angle = abs(angle - vertical_angle)
+        if tilt_angle > 10:  # 如果倾斜角度大于10度，认为是弯腰
+            if vec[0] < 0 and has_left_lean:
+                states.append({'index': 13, 'name': 'LeftLean'})
+            elif vec[0] > 0 and has_right_lean:
+                states.append({'index': 14, 'name': 'RightLean'})
 
     return states

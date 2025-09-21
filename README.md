@@ -85,7 +85,7 @@ pip install -r requirements.txt
 4. 打开游戏（例如愿神），运行 main.pyqt.py, 游戏角色将会随着你的动作进行移动。
 
 ### 动作与配置
-当前支持检测的动作可以参考 Source/id.json，每种动作对饮过的姿态可以参考 Source/Images，姿态与键盘输入的对应关系参考 Tools/state2bytes_vector.py。
+当前支持检测的动作可以参考 Source/configs.json，每种动作对应的姿态可以参考 Source/Images，姿态与键盘输入的对应关系参考 Tools/state2bytes_vector.py。
 
 ### 使用K230替代电脑进行检测(未充分验证)
 - 修改 LowerMachine/K230.py 文件的 WIFI账号、密码、树莓派Pico的IP 为你的设备信息。
@@ -124,7 +124,15 @@ pip install -r requirements.txt
 - **鲁棒性强**：归一化处理使系统对不同体型和距离具有良好适应性
 
 ## 调试与自定义
-你可以通过 debug.gradio.py 配置、记录新的姿势，并生成对应的配置文件 Source/configs.json，之后，仅需要修改 Tools/state2bytes_vector.py 中姿势和键盘输入的对应关系即可。
+推荐使用 Web 页面进行姿势录制与配置：
+
+- 启动应用后访问 http://localhost:5000
+- 打开“姿势录制”页面
+- 录制视频 → 选择帧 → 自动检测关键点 → 配置姿势名称、索引、基准点、核心关键点、阈值与映射按键
+- 可选填写参考图片（保存为 Source/Images 下的文件名），用于在页面中展示
+- 点击“保存姿势”持久化到 Source/configs.json
+
+之后，系统将根据 configs.json 中的 keys 字段，将检测到的姿势映射为对应的键盘/鼠标指令（逻辑见 UpperMachine/pose_estimation/state2bytes_vector.py）。
 
 ## 模型来源
 更多信息请参考

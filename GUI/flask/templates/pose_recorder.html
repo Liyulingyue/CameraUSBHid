@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>姿势录制与配置 - 姿态检测系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 1.1em;
+        }
+
+        .nav-links {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.3s ease;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .recording-section, .frames-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-placeholder {
+            text-align: center;
+            color: #666;
+        }
+
+        .preview-icon {
+            font-size: 4em;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+
+        .preview-placeholder p {
+            margin: 5px 0;
+            font-size: 1.1em;
+        }
+
+        .preview-placeholder small {
+            opacity: 0.7;
+        }
+
+        #recording-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .recording-dot {
+            width: 12px;
+            height: 12px;
+            background: #f44336;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .frames-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .frame-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: border-color 0.3s ease;
+        }
+
+        .frame-item.selected {
+            border-color: #4CAF50;
+        }
+
+        .frame-item img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .frame-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px;
+            font-size: 0.8em;
+            text-align: center;
+        }
+
+        .config-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            margin-top: 30px;
+        }
+
+        .form-label {
+            color: white;
+            font-weight: 500;
+        }
+
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .form-select option {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #4CAF50;
+            color: white;
+            box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .keypoints-display {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 0.9em;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-recording {
+            background: #f44336;
+            animation: pulse 1s infinite;
+        }
+
+        .status-processing {
+            background: #ff9800;
+            animation: pulse 1s infinite;
+        }
+
+        .status-ready {
+            background: #4CAF50;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .pose-result-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .pose-canvas {
+            max-width: 100%;
+            border-radius: 4px;
+        }
+
+        .keypoints-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .keypoint-item {
+            font-size: 0.8em;
+        }
+
+        /* 关键点表格样式 */
+        #keypoints-selector table {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(139, 195, 74, 0.1));
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #keypoints-selector thead {
+            background: linear-gradient(135deg, #4CAF50, #66BB6A);
+            color: white;
+        }
+
+        #keypoints-selector tbody tr:nth-child(even) {
+            background: rgba(76, 175, 80, 0.05);
+        }
+
+        #keypoints-selector tbody tr:nth-child(odd) {
+            background: rgba(139, 195, 74, 0.05);
+        }
+
+        #keypoints-selector tbody tr:hover {
+            background: rgba(76, 175, 80, 0.15);
+            transition: background 0.3s ease;
+        }
+
+        .pose-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .pose-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .pose-item:hover, .pose-item.selected {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .pose-item .pose-name {
+            font-weight: bold;
+        }
+
+        .pose-item .pose-index {
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .nav-links a {
+                display: block;
+                margin: 5px 0;
+            }
+
+            .frames-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎥 姿势录制与配置</h1>
+            <p>录制视频、提取帧、检测关键点、配置姿势模板</p>
+        </div>
+
+        <div class="nav-links">
+            <a href="/">主页</a>
+            <a href="/realtime">实时检测</a>
+            <a href="/mouse_control">鼠标控制</a>
+            <a href="/pose_recorder" class="active">姿势录制</a>
+        </div>
+
+        <div class="main-content">
+        <div class="recording-section">
+            <h3>📹 视频录制</h3>
+            <div class="video-container">
+                <video id="video-preview" autoplay muted style="display: none; max-width: 100%; max-height: 100%;"></video>
+                <video id="recorded-video" controls style="display: none; max-width: 100%; max-height: 100%;"></video>
+                <div id="no-camera" style="display: none; text-align: center; padding: 20px;">
+                    <p>无法访问摄像头</p>
+                    <p style="font-size: 0.9em; opacity: 0.7;">请确保已授予摄像头权限</p>
+                </div>
+                <div id="recording-indicator" style="display: none;">
+                    <div class="recording-dot"></div>
+                    <span>正在录制...</span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="start-record" class="btn btn-primary">开始录制</button>
+                <button id="stop-record" class="btn btn-danger" disabled>停止录制</button>
+                <button id="process-video" class="btn btn-success" disabled>处理帧</button>
+                <div class="form-check form-switch ms-3" style="display:inline-block;">
+                    <input class="form-check-input" type="checkbox" id="mirror-toggle">
+                    <label class="form-check-label" for="mirror-toggle">镜像显示</label>
+                </div>
+            </div>
+
+            <div class="recording-status">
+                <span class="status-indicator" id="status-indicator"></span>
+                <span id="status-text">准备就绪</span>
+            </div>
+        </div>            <div class="frames-section">
+                <h3>🖼️ 帧预览</h3>
+                <div id="frames-container">
+                    <p style="text-align: center; opacity: 0.7;">录制并处理视频后，帧将显示在这里</p>
+                </div>
+
+                <div class="mt-3">
+                    <span class="ms-3">已选择帧: <span id="selection-count">无</span></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="config-panel">
+            <h3>⚙️ 姿势配置</h3>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="existing-poses" class="form-label">选择现有姿势 (可选)</label>
+                        <select class="form-select" id="existing-poses">
+                            <option value="">新建姿势</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pose-name" class="form-label">姿势名称</label>
+                        <input type="text" class="form-control" id="pose-name" placeholder="例如: MyPose">
+                    </div>
+                    <div class="mb-3">
+                        <label for="pose-index" class="form-label">姿势索引</label>
+                        <input type="number" class="form-control" id="pose-index" placeholder="例如: 15">
+                    </div>
+                    <div class="mb-3">
+                        <label for="similarity-threshold" class="form-label">相似度阈值</label>
+                        <input type="number" class="form-control" id="similarity-threshold" step="0.01" min="0" max="1" value="0.95">
+                    </div>
+                    <div class="mb-3">
+                        <label for="pose-img" class="form-label">姿势图片 (可选)</label>
+                        <input type="text" class="form-control" id="pose-img" placeholder="例如: MyPose.jpg">
+                        <div class="form-text">关联到 Source/Images 目录下的图片文件</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="base-keypoint" class="form-label">基准关键点</label>
+                        <select class="form-select" id="base-keypoint">
+                            <option value="nose">nose</option>
+                            <option value="left_eye">left_eye</option>
+                            <option value="right_eye">right_eye</option>
+                            <option value="left_ear">left_ear</option>
+                            <option value="right_ear">right_ear</option>
+                            <option value="left_shoulder">left_shoulder</option>
+                            <option value="right_shoulder">right_shoulder</option>
+                            <option value="left_elbow">left_elbow</option>
+                            <option value="right_elbow">right_elbow</option>
+                            <option value="left_wrist">left_wrist</option>
+                            <option value="right_wrist">right_wrist</option>
+                            <option value="left_hip">left_hip</option>
+                            <option value="right_hip">right_hip</option>
+                            <option value="left_knee">left_knee</option>
+                            <option value="right_knee">right_knee</option>
+                            <option value="left_ankle">left_ankle</option>
+                            <option value="right_ankle">right_ankle</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="keys-input" class="form-label">映射按键 (用逗号分隔)</label>
+                        <input type="text" class="form-control" id="keys-input" placeholder="例如: w,a,s,d 或 space">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="inner-flag">
+                            <label class="form-check-label" for="inner-flag">
+                                内部姿势 (不参与常规检测)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">核心关键点选择</label>
+                <div id="keypoints-selector"><!-- 由JS动态生成表格 --></div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">姿势检测结果</label>
+                <div id="pose-results">
+                    检测姿势后将显示结果
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="save-pose" class="btn btn-success">保存姿势</button>
+                <button id="delete-pose" class="btn btn-danger" disabled>删除姿势</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 全局变量
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let frames = [];
+        let selectedFrames = new Set();
+        let currentPoseData = null;
+        let keypointsData = {};
+
+        // 关键点名称映射
+        const keypointNames = [
+            'nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear',
+            'left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow',
+            'left_wrist', 'right_wrist', 'left_hip', 'right_hip',
+            'left_knee', 'right_knee', 'left_ankle', 'right_ankle'
+        ];
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCamera();
+            setupEventListeners();
+            loadExistingPoses();
+            initializeKeypointsSelector();
+        });
+
+        // 初始化摄像头
+        async function initializeCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480 },
+                    audio: false
+                });
+                document.getElementById('video-preview').srcObject = stream;
+                document.getElementById('video-preview').style.display = 'block';
+                updateStatus('准备就绪', 'ready');
+            } catch (error) {
+                console.error('无法访问摄像头:', error);
+                document.getElementById('no-camera').style.display = 'block';
+                updateStatus('无法访问摄像头', 'error');
+            }
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            document.getElementById('start-record').addEventListener('click', startRecording);
+            document.getElementById('stop-record').addEventListener('click', stopRecording);
+            document.getElementById('process-video').addEventListener('click', processVideo);
+            document.getElementById('save-pose').addEventListener('click', savePose);
+            document.getElementById('delete-pose').addEventListener('click', deletePose);
+            document.getElementById('existing-poses').addEventListener('change', loadSelectedPose);
+        }
+
+        // 开始录制
+        function startRecording() {
+            recordedChunks = [];
+            const stream = document.getElementById('video-preview').srcObject;
+
+            mediaRecorder = new MediaRecorder(stream, {
+                mimeType: 'video/webm;codecs=vp9'
+            });
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                document.getElementById('recorded-video').src = url;
+                document.getElementById('recorded-video').style.display = 'block';
+                document.getElementById('video-preview').style.display = 'none';
+                updateStatus('录制完成', 'ready');
+                document.getElementById('process-video').disabled = false;
+            };
+
+            mediaRecorder.start();
+            updateStatus('正在录制...', 'recording');
+            document.getElementById('start-record').disabled = true;
+            document.getElementById('stop-record').disabled = false;
+        }
+
+        // 停止录制
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                document.getElementById('start-record').disabled = false;
+                document.getElementById('stop-record').disabled = true;
+            }
+        }
+
+        // 处理视频
+        async function processVideo() {
+            updateStatus('正在处理视频...', 'processing');
+            document.getElementById('process-video').disabled = true;
+
+            try {
+                const video = document.getElementById('recorded-video');
+                const duration = video.duration;
+                const frameCount = Math.min(20, Math.floor(duration * 2)); // 最多20帧
+
+                frames = [];
+                const framesContainer = document.getElementById('frames-container');
+                framesContainer.innerHTML = '<div class="frames-grid" id="frames-grid"></div>';
+
+                const framesGrid = document.getElementById('frames-grid');
+
+                for (let i = 0; i < frameCount; i++) {
+                    const time = (i / (frameCount - 1)) * duration;
+                    video.currentTime = time;
+
+                    await new Promise(resolve => {
+                        video.onseeked = () => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                            const ctx = canvas.getContext('2d');
+                            // 根据镜像偏好决定是否镜像绘制帧到canvas（影响送往后端的图像内容）
+                            const mirror = typeof getMirrorPreference === 'function' ? getMirrorPreference() : true;
+                            if (mirror) {
+                                ctx.save();
+                                // 将原点移动到右边再水平翻转，实现等效的scaleX(-1)
+                                ctx.translate(canvas.width, 0);
+                                ctx.scale(-1, 1);
+                                ctx.drawImage(video, 0, 0);
+                                ctx.restore();
+                            } else {
+                                ctx.drawImage(video, 0, 0);
+                            }
+
+                            const frameData = {
+                                index: i,
+                                time: time,
+                                imageData: canvas.toDataURL('image/jpeg', 0.8),
+                                mirrored: (typeof getMirrorPreference === 'function') ? getMirrorPreference() : false
+                            };
+                            frames.push(frameData);
+
+                            // 创建帧预览
+                            const frameItem = document.createElement('div');
+                            frameItem.className = 'frame-item';
+                            frameItem.dataset.frameIndex = i;
+                            frameItem.onclick = () => selectFrame(i);
+
+                            const img = document.createElement('img');
+                            img.src = frameData.imageData;
+                            frameItem.appendChild(img);
+
+                            const info = document.createElement('div');
+                            info.className = 'frame-info';
+                            info.textContent = `${i + 1}/${frameCount}`;
+                            frameItem.appendChild(info);
+
+                            framesGrid.appendChild(frameItem);
+                            // 应用镜像到新添加的帧预览
+                            if (typeof refreshFramePreviewMirror === 'function') {
+                                refreshFramePreviewMirror();
+                            }
+                            resolve();
+                        };
+                    });
+                }
+
+                updateStatus('视频处理完成，请选择合适的帧', 'ready');
+                document.getElementById('process-video').disabled = false;
+                // 处理完成后统一刷新一次
+                if (typeof refreshFramePreviewMirror === 'function') {
+                    refreshFramePreviewMirror();
+                }
+
+            } catch (error) {
+                console.error('处理视频时出错:', error);
+                updateStatus('处理失败', 'error');
+                document.getElementById('process-video').disabled = false;
+            }
+        }
+
+        // 处理帧（显示帧预览）
+        function processFrames() {
+            console.log('开始处理帧，帧数量:', frames.length);
+            console.log('帧数据示例:', frames[0]);
+            
+            if (frames.length === 0) {
+                alert('没有可处理的帧，请先录制视频');
+                return;
+            }
+
+            updateStatus('正在生成帧预览...', 'processing');
+            document.getElementById('process-video').disabled = true;
+
+            const framesContainer = document.getElementById('frames-container');
+            framesContainer.innerHTML = '<div class="frames-grid" id="frames-grid"></div>';
+
+            const framesGrid = document.getElementById('frames-grid');
+
+            frames.forEach((frameData, index) => {
+                const frameItem = document.createElement('div');
+                frameItem.className = 'frame-item';
+                frameItem.dataset.frameIndex = index;
+
+                const img = document.createElement('img');
+                img.src = frameData.imageData;
+                img.onload = () => {
+                    console.log(`帧 ${index} 加载成功`);
+                    if (index === frames.length - 1) {
+                        updateStatus('帧预览生成完成，请选择合适的帧', 'ready');
+                    }
+                };
+                img.onerror = () => {
+                    console.error(`帧 ${index} 加载失败`);
+                };
+
+                const info = document.createElement('div');
+                info.className = 'frame-info';
+                info.textContent = `${index + 1}/${frames.length}`;
+
+                frameItem.appendChild(img);
+                frameItem.appendChild(info);
+                frameItem.onclick = () => selectFrame(index);
+
+                framesGrid.appendChild(frameItem);
+            });
+        }
+
+        // 选择帧
+        function selectFrame(frameIndex) {
+            console.log('选择帧:', frameIndex);
+            const frameItem = document.querySelector(`[data-frame-index="${frameIndex}"]`);
+            console.log('找到的帧元素:', frameItem);
+
+            // 先清除所有选中状态
+            document.querySelectorAll('.frame-item.selected').forEach(item => {
+                item.classList.remove('selected');
+            });
+            selectedFrames.clear();
+
+            // 选择当前帧
+            selectedFrames.add(frameIndex);
+            frameItem.classList.add('selected');
+            console.log('选择帧:', frameIndex);
+
+            updateSelectedCount();
+
+            // 清空已有坐标，以便检测结果能写入（detect函数只填空字段）
+            if (typeof clearAllKeypointInputs === 'function') {
+                clearAllKeypointInputs();
+            }
+
+            // 自动检测关键点
+            detectKeypointsForSelectedFrames();
+        }
+
+        // 清空选择
+        function clearSelection() {
+            selectedFrames.forEach(frameIndex => {
+                const frameItem = document.querySelector(`[data-frame-index="${frameIndex}"]`);
+                frameItem.classList.remove('selected');
+            });
+            selectedFrames.clear();
+            updateSelectedCount();
+        }
+
+        // 更新选择计数
+        function updateSelectedCount() {
+            const count = selectedFrames.size;
+            if (count === 0) {
+                document.getElementById('selection-count').textContent = '无';
+            } else {
+                const frameIndex = Array.from(selectedFrames)[0];
+                document.getElementById('selection-count').textContent = `帧 ${frameIndex + 1}`;
+            }
+        }
+
+        // 检测姿势
+        async function detectPose() {
+            console.log('检测姿势函数被调用');
+            console.log('选中的帧数量:', selectedFrames.size);
+            if (selectedFrames.size === 0) {
+                alert('请先选择要检测的帧');
+                return;
+            }
+
+            updateStatus('正在检测姿势...', 'processing');
+            document.getElementById('detect-pose').disabled = true;
+
+            try {
+                console.log('开始调用detectKeypointsForSelectedFrames');
+                await detectKeypointsForSelectedFrames();
+                console.log('detectKeypointsForSelectedFrames完成');
+                updateStatus('姿势检测完成', 'ready');
+            } catch (error) {
+                console.error('姿势检测失败:', error);
+                updateStatus('姿势检测失败', 'error');
+            } finally {
+                document.getElementById('detect-pose').disabled = false;
+            }
+        }
+
+        // 为选中的帧检测关键点
+        async function detectKeypointsForSelectedFrames() {
+            const selectedFrameIndices = Array.from(selectedFrames);
+            const frameData = selectedFrameIndices.map(index => frames[index]);
+
+            console.log('发送给API的帧数据:', frameData);
+
+            try {
+                const response = await fetch('/api/detect_keypoints_batch', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ frames: frameData })
+                });
+
+                const result = await response.json();
+                console.log('API响应:', result);
+
+                if (result.success && result.keypoints) {
+                    keypointsData = result.keypoints;
+                    console.log('设置keypointsData:', keypointsData);
+
+                    // 仅取当前选中的单帧（我们强制单选帧）
+                    const frameIndex = Array.from(selectedFrames)[0];
+                    const detected = keypointsData[frameIndex];
+                    if (detected) {
+                        // 填充坐标（只填充空的字段）
+                        keypointNames.forEach(name => {
+                            const vals = detected[name];
+                            const xEl = document.getElementById(`kp-${name}-x`);
+                            const yEl = document.getElementById(`kp-${name}-y`);
+                            if (vals && xEl && yEl) {
+                                const [x, y] = vals;
+                                // 只在字段为空时填充推理结果
+                                if (xEl.value.trim() === '') {
+                                    xEl.value = Number.isFinite(x) ? x.toFixed(2) : '';
+                                }
+                                if (yEl.value.trim() === '') {
+                                    yEl.value = Number.isFinite(y) ? y.toFixed(2) : '';
+                                }
+                            }
+                        });
+
+                        // 在结果区域画出带关键点的图片
+                        renderPosePreview(frameIndex, detected);
+                    }
+                } else {
+                    console.error('API返回失败:', result);
+                    alert('关键点检测失败: ' + (result.message || '未知错误'));
+                }
+
+            } catch (error) {
+                console.error('关键点检测失败:', error);
+                alert('关键点检测失败: ' + error.message);
+            }
+        }
+
+        // 初始化关键点选择器（表格：多选复选框+名称+X/Y）
+        function initializeKeypointsSelector() {
+            const container = document.getElementById('keypoints-selector');
+            container.innerHTML = '';
+
+            const table = document.createElement('table');
+            table.className = 'table table-dark table-striped';
+
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+                <tr>
+                    <th scope="col">选择</th>
+                    <th scope="col">关键点名称</th>
+                    <th scope="col">X 坐标</th>
+                    <th scope="col">Y 坐标</th>
+                </tr>
+            `;
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+
+            keypointNames.forEach(name => {
+                const tr = document.createElement('tr');
+
+                const tdSelect = document.createElement('td');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.name = 'core-keypoint';
+                checkbox.id = `kp-${name}`;
+                checkbox.value = name;
+                checkbox.className = 'form-check-input';
+                tdSelect.appendChild(checkbox);
+
+                const tdName = document.createElement('td');
+                tdName.textContent = name;
+
+                const tdX = document.createElement('td');
+                const inputX = document.createElement('input');
+                inputX.type = 'text';
+                inputX.id = `kp-${name}-x`;
+                inputX.className = 'form-control';
+                tdX.appendChild(inputX);
+
+                const tdY = document.createElement('td');
+                const inputY = document.createElement('input');
+                inputY.type = 'text';
+                inputY.id = `kp-${name}-y`;
+                inputY.className = 'form-control';
+                tdY.appendChild(inputY);
+
+                tr.appendChild(tdSelect);
+                tr.appendChild(tdName);
+                tr.appendChild(tdX);
+                tr.appendChild(tdY);
+                tbody.appendChild(tr);
+            });
+
+            table.appendChild(tbody);
+            container.appendChild(table);
+        }
+
+        // 清空所有关键点输入框（不改变复选框的选中状态）
+        function clearAllKeypointInputs() {
+            keypointNames.forEach(name => {
+                const xEl = document.getElementById(`kp-${name}-x`);
+                const yEl = document.getElementById(`kp-${name}-y`);
+                if (xEl) xEl.value = '';
+                if (yEl) yEl.value = '';
+            });
+        }
+
+        // 保存姿势
+        async function savePose() {
+            const poseName = document.getElementById('pose-name').value.trim();
+            const poseIndex = parseInt(document.getElementById('pose-index').value);
+            const similarityThreshold = parseFloat(document.getElementById('similarity-threshold').value);
+            const baseKeypoint = document.getElementById('base-keypoint').value;
+            const keysInput = document.getElementById('keys-input').value.trim();
+            const innerFlag = document.getElementById('inner-flag').checked;
+            const poseImg = document.getElementById('pose-img').value.trim();
+
+            if (!poseName || isNaN(poseIndex)) {
+                alert('请填写姿势名称和索引');
+                return;
+            }
+
+            // 获取选中的核心关键点（多选）
+            const selectedKeypoints = Array.from(document.querySelectorAll('#keypoints-selector input[type="checkbox"][name="core-keypoint"]:checked'))
+                .map(cb => cb.value);
+
+            if (selectedKeypoints.length === 0) {
+                alert('请至少选择一个核心关键点');
+                return;
+            }
+
+            // 计算相对关键点数据（core - base）
+            let avgKeypoints;
+            try {
+                avgKeypoints = calculateAverageKeypoints(selectedKeypoints);
+            } catch (e) {
+                alert(e.message || '关键点计算失败');
+                return;
+            }
+
+            const poseData = {
+                name: poseName,
+                index: poseIndex,
+                inner_flag: innerFlag,
+                similarity_threshold: similarityThreshold,
+                keys: keysInput ? keysInput.split(',').map(k => k.trim()) : [],
+                basekeypoints: baseKeypoint,
+                list_corekeypoints: selectedKeypoints,
+                value_dict: avgKeypoints,
+                pose_img: poseImg
+            };
+
+            try {
+                const response = await fetch('/api/save_pose', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(poseData)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('姿势保存成功！');
+                    loadExistingPoses(); // 重新加载姿势列表
+                } else {
+                    alert('保存失败: ' + result.message);
+                }
+            } catch (error) {
+                console.error('保存姿势失败:', error);
+                alert('保存失败，请检查控制台日志');
+            }
+        }
+
+        // 计算相对关键点数据：value_dict = core_keypoint - basekeypoint
+        // 需求：
+        // - 若基准点未填写，则按 0 处理
+        // - 若核心点未填写，则相对量按 [0,0] 保存，确保一致
+        function calculateAverageKeypoints(selectedKeypoints) {
+            const result = {};
+
+            const base = document.getElementById('base-keypoint').value;
+            const bxStr = document.getElementById(`kp-${base}-x`).value.trim();
+            const byStr = document.getElementById(`kp-${base}-y`).value.trim();
+
+            let bx = 0, by = 0;
+            if (bxStr !== '' && byStr !== '') {
+                const tbx = parseFloat(bxStr);
+                const tby = parseFloat(byStr);
+                if (Number.isFinite(tbx) && Number.isFinite(tby)) {
+                    bx = tbx; by = tby;
+                }
+            }
+
+            selectedKeypoints.forEach(kp => {
+                const xStr = document.getElementById(`kp-${kp}-x`).value.trim();
+                const yStr = document.getElementById(`kp-${kp}-y`).value.trim();
+                if (xStr === '' || yStr === '') {
+                    // 未填写则相对量按 0 处理
+                    result[kp] = [0, 0];
+                    return;
+                }
+                const x = parseFloat(xStr);
+                const y = parseFloat(yStr);
+                if (!Number.isFinite(x) || !Number.isFinite(y)) {
+                    // 非法则按 0 处理
+                    result[kp] = [0, 0];
+                    return;
+                }
+                // core - base
+                result[kp] = [x - bx, y - by];
+            });
+
+            return result;
+        }
+
+        // 加载现有姿势到下拉框
+        async function loadExistingPoses() {
+            try {
+                const response = await fetch('/static/configs.json');
+                const poses = await response.json();
+                const select = document.getElementById('existing-poses');
+                select.innerHTML = '<option value="">新建姿势</option>';
+                poses.forEach(pose => {
+                    const option = document.createElement('option');
+                    option.value = pose.index; // 使用index作为唯一标识符
+                    option.textContent = pose.name;
+                    option.dataset.poseImg = pose.pose_img || ''; // 存储姿势图片信息
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('加载姿势列表失败:', error);
+            }
+        }
+
+        // 加载选中的姿势
+        async function loadSelectedPose() {
+            const select = document.getElementById('existing-poses');
+            const poseIndex = parseInt(select.value);
+            if (!poseIndex && poseIndex !== 0) {
+                // 清空表单
+                document.getElementById('pose-name').value = '';
+                document.getElementById('pose-index').value = '';
+                document.getElementById('similarity-threshold').value = '0.95';
+                document.getElementById('base-keypoint').value = 'nose';
+                document.getElementById('keys-input').value = '';
+                document.getElementById('inner-flag').checked = false;
+                document.getElementById('pose-img').value = '';
+                
+                // 清空核心关键点选择和坐标
+                document.querySelectorAll('#keypoints-selector input[type="checkbox"][name="core-keypoint"]').forEach(cb => {
+                    cb.checked = false;
+                });
+                keypointNames.forEach(name => {
+                    const xEl = document.getElementById(`kp-${name}-x`);
+                    const yEl = document.getElementById(`kp-${name}-y`);
+                    if (xEl) xEl.value = '';
+                    if (yEl) yEl.value = '';
+                });
+                
+                document.getElementById('delete-pose').disabled = true;
+                return;
+            }
+
+            try {
+                const response = await fetch('/static/configs.json');
+                const poses = await response.json();
+                const pose = poses.find(p => p.index === poseIndex);
+
+                if (pose) {
+                    // 先清空所有关键点输入，避免残留值阻止后续刷新
+                    if (typeof clearAllKeypointInputs === 'function') {
+                        clearAllKeypointInputs();
+                    }
+
+                    document.getElementById('pose-name').value = pose.name || '';
+                    document.getElementById('pose-index').value = pose.index || '';
+                    document.getElementById('similarity-threshold').value = pose.similarity_threshold || '0.95';
+                    document.getElementById('base-keypoint').value = pose.basekeypoints || 'nose';
+                    document.getElementById('keys-input').value = pose.keys ? pose.keys.join(',') : '';
+                    document.getElementById('inner-flag').checked = pose.inner_flag || false;
+                    document.getElementById('pose-img').value = pose.pose_img || '';
+
+                    // 恢复核心关键点（多选）
+                    const coreList = pose.list_corekeypoints || [];
+                    document.querySelectorAll('#keypoints-selector input[type="checkbox"][name="core-keypoint"]').forEach(cb => {
+                        cb.checked = coreList.includes(cb.value);
+                    });
+
+                    // 将相对坐标转换为绝对坐标显示：abs = rel + base
+                    if (pose.value_dict) {
+                        const baseName = pose.basekeypoints || 'nose';
+                        const bxEl = document.getElementById(`kp-${baseName}-x`);
+                        const byEl = document.getElementById(`kp-${baseName}-y`);
+                        let bx = 0, by = 0;
+                        if (bxEl && bxEl.value !== '' && byEl && byEl.value !== '') {
+                            const tbx = parseFloat(bxEl.value);
+                            const tby = parseFloat(byEl.value);
+                            if (Number.isFinite(tbx) && Number.isFinite(tby)) { bx = tbx; by = tby; }
+                        }
+
+                        // 遍历当前已知的核心点集合（来自 pose.list_corekeypoints）
+                        const coreList = pose.list_corekeypoints || Object.keys(pose.value_dict);
+                        coreList.forEach(keypointName => {
+                            const rel = pose.value_dict[keypointName] || [0, 0];
+                            const xEl = document.getElementById(`kp-${keypointName}-x`);
+                            const yEl = document.getElementById(`kp-${keypointName}-y`);
+                            if (xEl && yEl && Array.isArray(rel) && rel.length >= 2) {
+                                const rx = Number.isFinite(rel[0]) ? rel[0] : 0;
+                                const ry = Number.isFinite(rel[1]) ? rel[1] : 0;
+                                xEl.value = (bx + rx).toFixed(2);
+                                yEl.value = (by + ry).toFixed(2);
+                            }
+                        });
+                    }
+
+                    updateStatus('姿势加载成功', 'ready');
+                    document.getElementById('delete-pose').disabled = false;
+                } else {
+                    updateStatus('未找到指定的姿势', 'error');
+                    document.getElementById('delete-pose').disabled = true;
+                    // 清空坐标字段
+                    keypointNames.forEach(name => {
+                        const xEl = document.getElementById(`kp-${name}-x`);
+                        const yEl = document.getElementById(`kp-${name}-y`);
+                        if (xEl) xEl.value = '';
+                        if (yEl) yEl.value = '';
+                    });
+                }
+            } catch (error) {
+                console.error('加载姿势失败:', error);
+                updateStatus('加载失败', 'error');
+                document.getElementById('delete-pose').disabled = true;
+                // 清空坐标字段
+                keypointNames.forEach(name => {
+                    const xEl = document.getElementById(`kp-${name}-x`);
+                    const yEl = document.getElementById(`kp-${name}-y`);
+                    if (xEl) xEl.value = '';
+                    if (yEl) yEl.value = '';
+                });
+            }
+        }
+
+        // 删除姿势
+        async function deletePose() {
+            const select = document.getElementById('existing-poses');
+            const poseIndex = parseInt(select.value);
+            if (!Number.isInteger(poseIndex)) {
+                alert('请先从列表中选择要删除的姿势');
+                return;
+            }
+
+            if (!confirm(`确定要删除索引为 ${poseIndex} 的姿势吗？此操作不可恢复。`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/delete_pose', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ index: poseIndex })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert('删除成功');
+                    await loadExistingPoses();
+                    // 重置选择为“新建姿势”
+                    document.getElementById('existing-poses').value = '';
+                    await loadSelectedPose();
+                } else {
+                    alert('删除失败: ' + (result.message || '未知错误'));
+                }
+            } catch (err) {
+                console.error('删除姿势失败:', err);
+                alert('删除失败，请检查控制台日志');
+            }
+        }
+
+        // 读取和保存镜像偏好
+        function getMirrorPreference() {
+            const v = localStorage.getItem('pose_mirror_enabled');
+            return v === null ? true : v === 'true'; // 默认开启
+        }
+
+        function setMirrorPreference(enabled) {
+            localStorage.setItem('pose_mirror_enabled', enabled ? 'true' : 'false');
+        }
+
+        // 应用镜像到视频元素
+        function applyMirrorToVideos(enabled) {
+            const preview = document.getElementById('video-preview');
+            const recorded = document.getElementById('recorded-video');
+            const t = enabled ? 'scaleX(-1)' : 'none';
+            if (preview) preview.style.transform = t;
+            if (recorded) recorded.style.transform = t;
+        }
+
+        // 应用镜像到帧预览容器
+        function applyMirrorToFrames(enabled) {
+            // 注意：帧图像数据在抓取阶段已根据偏好进行镜像绘制
+            // 这里不再对预览img做CSS镜像，避免双重镜像导致方向错误
+        }
+
+        // 初始化开关和监听
+        document.addEventListener('DOMContentLoaded', () => {
+            const mirrorToggle = document.getElementById('mirror-toggle');
+            const enabled = getMirrorPreference();
+            if (mirrorToggle) {
+                mirrorToggle.checked = enabled;
+                mirrorToggle.addEventListener('change', () => {
+                    const en = mirrorToggle.checked;
+                    setMirrorPreference(en);
+                    applyMirrorToVideos(en);
+                    applyMirrorToFrames(en);
+                    // 若已有录制视频，切换镜像后自动重新处理帧以应用新方向
+                    const recorded = document.getElementById('recorded-video');
+                    if (recorded && recorded.src) {
+                        // 清空已有帧
+                        const framesContainer = document.getElementById('frames-container');
+                        if (framesContainer) framesContainer.innerHTML = '<p style="text-align: center; opacity: 0.7;">正在根据新方向重新生成帧...</p>';
+                        // 重新处理
+                        setTimeout(() => { processVideo(); }, 50);
+                    }
+                });
+            }
+            applyMirrorToVideos(enabled);
+        });
+
+        // 在处理完帧并创建预览后调用一次
+        function refreshFramePreviewMirror() {
+            const enabled = getMirrorPreference();
+            applyMirrorToFrames(enabled);
+        }
+
+        // 更新状态
+        function updateStatus(text, status) {
+            document.getElementById('status-text').textContent = text;
+            const indicator = document.getElementById('status-indicator');
+
+            indicator.className = 'status-indicator';
+            if (status === 'recording') {
+                indicator.classList.add('status-recording');
+            } else if (status === 'processing') {
+                indicator.classList.add('status-processing');
+            } else if (status === 'ready') {
+                indicator.classList.add('status-ready');
+            }
+        }
+
+        // 在结果区域渲染关键点（使用API绘制）
+        async function renderPosePreview(frameIndex, keypoints) {
+            const resultDiv = document.getElementById('pose-results');
+            resultDiv.innerHTML = '';
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'pose-result-item';
+
+            // 获取当前选中的姿势图片
+            const select = document.getElementById('existing-poses');
+            const poseIndex = parseInt(select.value);
+            let poseImgSrc = null;
+
+            if (!isNaN(poseIndex)) {
+                // 从已加载的姿势列表中查找
+                const selectedOption = select.options[select.selectedIndex];
+                if (selectedOption && selectedOption.dataset && selectedOption.dataset.poseImg) {
+                    poseImgSrc = selectedOption.dataset.poseImg;
+                }
+            }
+
+            // 解析姿势图片路径，兼容以下输入：
+            // - "MyPose.jpg"
+            // - "Images/MyPose.jpg"
+            // - "Source/Images/MyPose.jpg"
+            // - "/static/Images/MyPose.jpg"
+            function resolvePoseImageUrl(src) {
+                if (!src) return null;
+                let s = String(src).trim();
+                if (s.startsWith('/static/')) return s; // 已是静态路径
+                if (s.startsWith('Source/Images/')) {
+                    s = s.substring('Source/Images/'.length).trim();
+                } else if (s.startsWith('Images/')) {
+                    s = s.substring('Images/'.length).trim();
+                } else if (s.includes('/')) {
+                    // 兜底：只取文件名部分
+                    const parts = s.split('/');
+                    s = parts[parts.length - 1].trim();
+                }
+                return `/static/Images/${s}`;
+            }
+
+            // 如果有姿势图片，先显示图片
+            if (poseImgSrc) {
+                const poseImg = document.createElement('img');
+                poseImg.src = resolvePoseImageUrl(poseImgSrc);
+                poseImg.className = 'pose-reference-img';
+                poseImg.style.maxWidth = '200px';
+                poseImg.style.maxHeight = '150px';
+                poseImg.style.marginBottom = '10px';
+                poseImg.style.border = '2px solid #4CAF50';
+                poseImg.style.borderRadius = '5px';
+                poseImg.onerror = () => {
+                    console.warn(`无法加载姿势图片: ${poseImgSrc}`);
+                    poseImg.style.display = 'none';
+                };
+                wrapper.appendChild(poseImg);
+            }
+
+            try {
+                // 调用API获取绘制了关键点的图像
+                const response = await fetch('/api/render_keypoints', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ frame: frames[frameIndex] })
+                });
+
+                const result = await response.json();
+                
+                if (result.success && result.imageData) {
+                    const keypointsImg = document.createElement('img');
+                    keypointsImg.src = result.imageData;
+                    keypointsImg.className = 'pose-canvas';
+                    keypointsImg.style.maxWidth = '100%';
+                    keypointsImg.style.height = 'auto';
+                    wrapper.appendChild(keypointsImg);
+                } else {
+                    // 如果API调用失败，显示错误信息
+                    const errorDiv = document.createElement('div');
+                    errorDiv.textContent = '关键点渲染失败';
+                    errorDiv.style.color = 'red';
+                    errorDiv.style.padding = '20px';
+                    errorDiv.style.textAlign = 'center';
+                    wrapper.appendChild(errorDiv);
+                }
+            } catch (error) {
+                console.error('渲染关键点时出错:', error);
+                const errorDiv = document.createElement('div');
+                errorDiv.textContent = '关键点渲染出错';
+                errorDiv.style.color = 'red';
+                errorDiv.style.padding = '20px';
+                errorDiv.style.textAlign = 'center';
+                wrapper.appendChild(errorDiv);
+            }
+
+            resultDiv.appendChild(wrapper);
+        }
+    </script>
+</body>
+</html>

@@ -9,7 +9,7 @@ from flask_socketio import SocketIO
 # 导入路由
 from UpperMachine.flask.routes import register_routes
 
-app = Flask(__name__, template_folder='GUI/flask/templates')
+app = Flask(__name__, template_folder='GUI/flask/templates', static_folder='Source', static_url_path='/static')
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 

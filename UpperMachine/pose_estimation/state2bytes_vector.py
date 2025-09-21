@@ -48,9 +48,9 @@ words2bytes_dict = {
     "mouse_wheel_down": -8,      # 滚轮向下
 }
 
-with open("Source/mapper.json", "r", encoding="utf-8") as f:
-    data = json.load(f)
-    mapper_list = data["mapper"]
+with open("Source/configs.json", "r", encoding="utf-8") as f:
+    configs_data = json.load(f)
+    mapper_list = [{"action": [pose["index"]], "keys": pose["keys"]} for pose in configs_data]
 
 def state2words(state):
     words_list = []
