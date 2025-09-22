@@ -336,12 +336,12 @@
         ],
         "value_dict": {
             "left_elbow": [
-                -56,
-                67.5
+                -101.05000000000001,
+                22.5
             ],
             "left_wrist": [
-                -117.9,
-                127.5
+                -106.67000000000002,
+                120
             ]
         },
         "pose_img": ""
@@ -442,6 +442,134 @@
                 -97.5
             ]
         },
+        "pose_img": ""
+    },
+    {
+        "name": "RightSpace",
+        "index": 20,
+        "inner_flag": false,
+        "similarity_threshold": 0.95,
+        "keys": [
+            "space"
+        ],
+        "basekeypoints": "right_shoulder",
+        "list_corekeypoints": [
+            "right_elbow",
+            "right_wrist"
+        ],
+        "value_dict": {
+            "right_elbow": [
+                44.90999999999997,
+                82.5
+            ],
+            "right_wrist": [
+                -61.76000000000005,
+                82.5
+            ]
+        },
+        "pose_img": ""
+    },
+    {
+        "name": "RightX",
+        "index": 21,
+        "inner_flag": false,
+        "similarity_threshold": 0.95,
+        "keys": [
+            "x"
+        ],
+        "basekeypoints": "right_shoulder",
+        "list_corekeypoints": [
+            "right_elbow",
+            "right_wrist"
+        ],
+        "value_dict": {
+            "right_elbow": [
+                67.37,
+                75
+            ],
+            "right_wrist": [
+                11.230000000000018,
+                142.5
+            ]
+        },
+        "pose_img": ""
+    },
+    {
+        "name": "LeftF",
+        "index": 22,
+        "inner_flag": false,
+        "similarity_threshold": 0.95,
+        "keys": [
+            "f"
+        ],
+        "basekeypoints": "left_shoulder",
+        "list_corekeypoints": [
+            "left_elbow",
+            "left_wrist"
+        ],
+        "value_dict": {
+            "left_elbow": [
+                -44.91,
+                82.5
+            ],
+            "left_wrist": [
+                56.139999999999986,
+                90
+            ]
+        },
+        "pose_img": ""
+    },
+    {
+        "name": "LeftChange",
+        "index": 23,
+        "inner_flag": true,
+        "similarity_threshold": 0.95,
+        "keys": [
+            "1"
+        ],
+        "basekeypoints": "left_shoulder",
+        "list_corekeypoints": [
+            "left_elbow",
+            "left_wrist"
+        ],
+        "value_dict": {
+            "left_elbow": [
+                -84.21000000000001,
+                60
+            ],
+            "left_wrist": [
+                -16.840000000000003,
+                120
+            ]
+        },
+        "pose_img": ""
+    },
+    {
+        "name": "LeftTurn",
+        "index": 24,
+        "inner_flag": true,
+        "similarity_threshold": 0.95,
+        "keys": [
+            "move_left",
+            "mouse_release"
+        ],
+        "basekeypoints": "nose",
+        "list_corekeypoints": [],
+        "value_dict": {},
+        "pose_img": ""
+    },
+    {
+        "name": "RightTurn",
+        "index": 25,
+        "inner_flag": true,
+        "similarity_threshold": 0.95,
+        "keys": [
+            "move_right",
+            "mouse_release"
+        ],
+        "basekeypoints": "nose",
+        "list_corekeypoints": [],
+        "value_dict": {},
         "pose_img": ""
     }
 ]

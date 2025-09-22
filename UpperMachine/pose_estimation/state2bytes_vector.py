@@ -39,13 +39,13 @@ words2bytes_dict = {
 
     # 鼠标操作 - 使用特殊标识符 (负数表示鼠标操作)
     "mouse_left_click": -1,      # 鼠标左键按下
-    "mouse_left_release": -2,    # 鼠标左键释放
     "mouse_right_click": -3,     # 鼠标右键按下
-    "mouse_right_release": -4,   # 鼠标右键释放
     "mouse_middle_click": -5,    # 鼠标中键按下
-    "mouse_middle_release": -6,  # 鼠标中键释放
     "mouse_wheel_up": -7,        # 滚轮向上
     "mouse_wheel_down": -8,      # 滚轮向下
+    "move_left": -9,             # 鼠标左移
+    "move_right": -10,           # 鼠标右移
+    "mouse_release": -11,        # 鼠标释放（所有按键）
 }
 
 with open("Source/configs.json", "r", encoding="utf-8") as f:
@@ -103,6 +103,7 @@ def words2bytes(words_list):
     """
     将按键名称列表转换为字节列表
     支持键盘和鼠标操作的混合
+    如果没有鼠标动作，默认生成鼠标释放操作
     """
     keyboard_bytes = []
     mouse_actions = []
@@ -113,6 +114,10 @@ def words2bytes(words_list):
             mouse_actions.append(code)
         else:  # 正数或0表示键盘操作
             keyboard_bytes.append(code)
+
+    # 如果没有鼠标动作，默认生成鼠标释放操作
+    if not mouse_actions:
+        mouse_actions.append(-11)  # mouse_release
 
     return keyboard_bytes, mouse_actions
 

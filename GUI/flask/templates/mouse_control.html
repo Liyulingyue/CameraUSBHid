@@ -135,11 +135,13 @@
                     <div class="mb-3">
                         <label class="form-label">鼠标调试</label>
                         <div class="d-flex gap-2 flex-wrap">
-                            <button type="button" class="btn btn-primary" id="btn-left-click" style="font-size: 1.1em; padding: 10px 20px;">左键</button>
+                            <button type="button" class="btn btn-primary" id="btn-left-click" style="font-size: 1.1em; padding: 10px 20px;">左键点击</button>
                             <button type="button" class="btn btn-primary" id="btn-left-press" style="font-size: 1.1em; padding: 10px 20px;">按下左键</button>
-                            <button type="button" class="btn btn-primary" id="btn-left-release" style="font-size: 1.1em; padding: 10px 20px;">释放左键</button>
                             <button type="button" class="btn btn-primary" id="btn-move-left" style="font-size: 1.1em; padding: 10px 20px;">左移</button>
                             <button type="button" class="btn btn-primary" id="btn-move-right" style="font-size: 1.1em; padding: 10px 20px;">右移</button>
+                            <button type="button" class="btn btn-primary" id="btn-move-left-release" style="font-size: 1.1em; padding: 10px 20px;">左移后释放</button>
+                            <button type="button" class="btn btn-primary" id="btn-move-right-release" style="font-size: 1.1em; padding: 10px 20px;">右移后释放</button>
+                            <button type="button" class="btn btn-primary" id="btn-mouse-release" style="font-size: 1.1em; padding: 10px 20px;">鼠标释放</button>
                         </div>
                     </div>
 
@@ -202,12 +204,6 @@
             sendMouseCommand(url, port, 'mouse_left_click');
         });
 
-        document.getElementById('btn-left-release').addEventListener('click', function() {
-            const url = document.getElementById('mouse-url').value;
-            const port = document.getElementById('mouse-port').value;
-            sendMouseCommand(url, port, 'mouse_left_release');
-        });
-
         document.getElementById('btn-move-left').addEventListener('click', function() {
             const url = document.getElementById('mouse-url').value;
             const port = document.getElementById('mouse-port').value;
@@ -218,6 +214,24 @@
             const url = document.getElementById('mouse-url').value;
             const port = document.getElementById('mouse-port').value;
             sendMouseCommand(url, port, 'move_right');
+        });
+
+        document.getElementById('btn-move-left-release').addEventListener('click', function() {
+            const url = document.getElementById('mouse-url').value;
+            const port = document.getElementById('mouse-port').value;
+            sendMouseCommand(url, port, 'move_left_release');
+        });
+
+        document.getElementById('btn-move-right-release').addEventListener('click', function() {
+            const url = document.getElementById('mouse-url').value;
+            const port = document.getElementById('mouse-port').value;
+            sendMouseCommand(url, port, 'move_right_release');
+        });
+
+        document.getElementById('btn-mouse-release').addEventListener('click', function() {
+            const url = document.getElementById('mouse-url').value;
+            const port = document.getElementById('mouse-port').value;
+            sendMouseCommand(url, port, 'mouse_release');
         });
 
         function sendMouseCommand(url, port, words) {

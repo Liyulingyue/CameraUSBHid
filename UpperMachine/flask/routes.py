@@ -230,11 +230,6 @@ def register_routes(app, socketio):
                 cmd = mouse2command(-1)
                 send_command(url, port, cmd)
                 return jsonify({'status': 'success', 'result': 'Left press sent', 'hex': cmd.hex()})
-            elif words == 'mouse_left_release':
-                print("[DEBUG] Sending left release")
-                cmd = mouse2command(-2)
-                send_command(url, port, cmd)
-                return jsonify({'status': 'success', 'result': 'Left release sent', 'hex': cmd.hex()})
             elif words == 'move_left':
                 print("[DEBUG] Sending move left: x=-10, y=0")
                 # 左移光标：x=-10, y=0
@@ -247,6 +242,30 @@ def register_routes(app, socketio):
                 cmd = mouse2command(0, 10, 0)
                 send_command(url, port, cmd)
                 return jsonify({'status': 'success', 'result': 'Move right sent', 'hex': cmd.hex()})
+            elif words == 'move_left_release':
+                print("[DEBUG] Sending move left and release: x=-10, y=0 + left release")
+                # 左移后释放：左移 + 释放左键
+                cmd1 = mouse2command(0, -10, 0)
+                cmd2 = mouse2command(-2)
+                send_command(url, port, cmd1)
+                send_command(url, port, cmd2)
+                hex_data = f"{cmd1.hex()} + {cmd2.hex()}"
+                return jsonify({'status': 'success', 'result': 'Move left and release sent', 'hex': hex_data})
+            elif words == 'move_right_release':
+                print("[DEBUG] Sending move right and release: x=10, y=0 + left release")
+                # 右移后释放：右移 + 释放左键
+                cmd1 = mouse2command(0, 10, 0)
+                cmd2 = mouse2command(-2)
+                send_command(url, port, cmd1)
+                send_command(url, port, cmd2)
+                hex_data = f"{cmd1.hex()} + {cmd2.hex()}"
+                return jsonify({'status': 'success', 'result': 'Move right and release sent', 'hex': hex_data})
+            elif words == 'mouse_release':
+                print("[DEBUG] Sending mouse release: release all mouse buttons")
+                # 鼠标释放：释放所有鼠标按键
+                cmd = mouse2command(-2)  # 释放左键
+                send_command(url, port, cmd)
+                return jsonify({'status': 'success', 'result': 'Mouse release sent', 'hex': cmd.hex()})
             else:
                 print(f"[DEBUG] Processing general words: {words}")
                 # 默认键盘或鼠标动作

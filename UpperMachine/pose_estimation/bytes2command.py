@@ -106,6 +106,12 @@ def mouse2command(action, x=0, y=0):
         wheel = 0x01
     elif action == -8:  # 滚轮向下
         wheel = 0xFF
+    elif action == -9:  # 鼠标左移
+        x_rel = -10  # 左移10像素
+    elif action == -10:  # 鼠标右移
+        x_rel = 10   # 右移10像素
+    elif action == -11:  # 鼠标释放（所有按键）
+        button_value = 0x00  # 释放所有按键
     else:  # 相对移动
         # 将输入的x,y作为相对移动值，限制在-127~127范围内
         x_rel = max(-127, min(127, x))
@@ -188,4 +194,16 @@ if __name__ == "__main__":
 
     mouse_command = mouse2command(0, 10, -5)  # 相对移动：右移10像素，上移5像素
     print("鼠标相对移动命令:", bytes(mouse_command).hex(' ').upper())
-    # 输出示例: 57 AB 00 05 05 01 00 0A FB 00 XX
+    # 输出示例: 57 AB 00 05 05 01 00 0A FB 00 XX bytes: 完整的二进制命令包
+
+    mouse_command = mouse2command(-9)  # 鼠标左移
+    print("鼠标左移命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 57 AB 00 05 05 01 00 F6 00 00 XX
+
+    mouse_command = mouse2command(-10)  # 鼠标右移
+    print("鼠标右移命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 57 AB 00 05 05 01 00 0A 00 00 XX
+
+    mouse_command = mouse2command(-11)  # 鼠标释放
+    print("鼠标释放命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 57 AB 00 05 05 05 01 00 00 00 00 XX

@@ -68,4 +68,52 @@ def posedict2state(keypoints):
             elif vec[0] > 0 and has_right_lean:
                 states.append({'index': 14, 'name': 'RightLean'})
 
+    # 检测转身动作（LeftTurn和RightTurn）
+    has_left_turn = any(p.get("name") == "LeftTurn" and p.get("inner_flag", False) for p in config_list)
+    has_right_turn = any(p.get("name") == "RightTurn" and p.get("inner_flag", False) for p in config_list)
+    
+    if has_left_turn or has_right_turn:
+        try:
+            # 计算双眼中点
+            mid_eyes = (keypoints['left_eye'] + keypoints['right_eye']) / 2
+            
+            # 计算肩膀中点
+            mid_shoulders = (keypoints['left_shoulder'] + keypoints['right_shoulder']) / 2
+            
+            # 计算胯部中点
+            mid_hips = (keypoints['left_hip'] + keypoints['right_hip']) / 2
+            
+            # 向量1：双眼中点到肩膀中点的向量
+            vector1 = mid_shoulders - mid_eyes
+            
+            # 向量2：肩膀中点到胯部中点的向量
+            vector2 = mid_hips - mid_shoulders
+            
+            # 计算两个向量的夹角（使用atan2计算角度）
+            angle1 = np.arctan2(vector1[1], vector1[0])
+            angle2 = np.arctan2(vector2[1], vector2[0])
+            
+            # 计算夹角差（弧度）
+            angle_diff = angle2 - angle1
+            
+            # 将角度差标准化到 [-pi, pi] 范围
+            angle_diff = (angle_diff + np.pi) % (2 * np.pi) - np.pi
+            
+            # 转换为度数
+            angle_diff_deg = angle_diff * 180 / np.pi
+            
+            # 根据夹角偏向判断转身方向
+            # 如果夹角为正（顺时针），认为是右转
+            # 如果夹角为负（逆时针），认为是左转
+            turn_threshold = 15  # 转身角度阈值（度）
+            
+            if angle_diff_deg > turn_threshold and has_right_turn:
+                states.append({'index': 25, 'name': 'RightTurn'})
+            elif angle_diff_deg < -turn_threshold and has_left_turn:
+                states.append({'index': 24, 'name': 'LeftTurn'})
+                
+        except KeyError as e:
+            # 如果缺少关键点，跳过转身检测
+            pass
+
     return states

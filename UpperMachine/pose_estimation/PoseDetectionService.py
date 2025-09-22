@@ -3,7 +3,7 @@ import time
 from UpperMachine.pose_estimation.ov.Estimator import HumanPoseEstimator
 from UpperMachine.pose_estimation.posedict2state_vector import posedict2state
 from UpperMachine.pose_estimation.state2bytes_vector import state2bytes, state2words
-from UpperMachine.pose_estimation.bytes2command import bytes2command
+from UpperMachine.pose_estimation.bytes2command import bytes2command, mouse2command
 from UpperMachine.pose_estimation.sendcommand import send_command_timeout as send_command
 
 class PoseDetectionService:
@@ -93,20 +93,23 @@ class PoseDetectionService:
 
             # 转换状态为字节
             keyboard_bytes, mouse_actions = state2bytes(state)
-            state_bytes = keyboard_bytes
-            # TODO: 补充鼠标动作的处理
-            # 转换为命令
-            command = bytes2command(state_bytes)
 
-            # 发送命令
-            result = send_command(server_ip=self.target_ip, command=command, timeout=1.0)
+            # 发送键盘命令（如果有键盘操作）
+            if keyboard_bytes:
+                command = bytes2command(keyboard_bytes)
+                result = send_command(server_ip=self.target_ip, command=command, timeout=1.0)
+
+            # 发送鼠标命令
+            for mouse_action in mouse_actions:
+                command = mouse2command(mouse_action)
+                result = send_command(server_ip=self.target_ip, command=command, timeout=1.0)
 
             # 更新上次发送状态
             self.last_sent_state = state
 
             # 记录命令历史
             command_info = {
-                'command': command.hex(),
+                'command': f"keyboard: {keyboard_bytes}, mouse: {mouse_actions}",
                 'result': result,
                 'timestamp': time.time(),
                 'state': state
