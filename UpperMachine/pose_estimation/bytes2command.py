@@ -5,8 +5,6 @@ def bytes2command(data_list):
     参数:
         data_list (list): 要发送的数据列表，每个元素应为0-255的整数
 
-    返回:
-        bytes: 完整的二进制命令包
     """
     data_list = [0x00] if len(data_list) == 0 else data_list
     data_list = [0x00] * (8 - len(data_list)) + data_list # 补零，避免无反应
@@ -41,23 +39,55 @@ def bytes2command(data_list):
 
 def mouse2command(action, x=0, y=0):
     """
-    根据鼠标动作和坐标生成完整的 USB 鼠标命令包
+    根据鼠标动作和坐标生成完整的 USB 鼠标命令包 (相对模式)
     数据包格式：
     - 帧头 (2字节): 0x57, 0xAB
     - 地址 (1字节): 0x00
-    - 命令 (1字节): 0x04 (鼠标命令)
-    - 数据长度 (1字节): 0x07 (固定7字节)
-    - 数据 (7字节): USB 绝对鼠标数据包
+    - 命令 (1字节): 0x05 (鼠标相对命令)
+    - 数据长度 (1字节): 0x05 (相对模式5字节)
+    - 数据 (5字节): USB 相对鼠标数据包
+      - 第1字节：固定为1
+      - 第2字节：按键状态 (bit0:左键, bit1:右键, bit2:中键)
+      - 第3字节：X轴相对移动 (-127~127)
+      - 第4字节：Y轴相对移动 (-127~127)
+      - 第5字节：滚轮相对移动 (-127~127)
     - 校验和 (1字节): 累加和
-    """
-    # 生成7字节鼠标数据包
-    data_packet = [0x02]  # 第1个字节固定为0x02
 
+    # 鼠标命令示例
+    mouse_command = mouse2command(-1)  # 左键按下
+    print("鼠标左键按下命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 57 AB 00 05 05 01 01 00 00 00 XX
+
+    mouse_command = mouse2command(-2)  # 左键弹起
+    print("鼠标左键弹起命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 57 AB 00 05 05 01 00 00 00 00 XX
+
+    mouse_command = mouse2command(0, -10, 0)  # 鼠标左移10像素
+    print("鼠标左移命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 57 AB 00 05 05 01 00 F6 00 00 XX
+
+    mouse_command = mouse2command(0, 10, 0)  # 鼠标右移10像素
+    print("鼠标右移命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 57 AB 00 05 05 01 00 0A 00 00 XX
+
+    mouse_command = mouse2command(-7)  # 滚轮向上
+    print("鼠标滚轮向上命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 57 AB 00 05 05 01 00 00 00 01 XX
+
+    mouse_command = mouse2command(-8)  # 滚轮向下
+    print("鼠标滚轮向下命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 57 AB 00 05 05 01 00 00 00 FF XX
+
+    mouse_command = mouse2command(0, 10, -5)  # 相对移动：右移10像素，上移5像素
+    print("鼠标相对移动命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 57 AB 00 05 05 01 00 0A FB 00 XX bytes: 完整的二进制命令包
+    
+    """
     # 初始化默认值
     button_value = 0x00  # 鼠标按键值
-    x_axis = x & 0xFFFF  # X轴坐标值，限制为16位
-    y_axis = y & 0xFFFF  # Y轴坐标值，限制为16位
-    wheel = 0x00  # 滚轮滚动齿数
+    x_rel = 0            # X轴相对移动
+    y_rel = 0            # Y轴相对移动
+    wheel = 0x00         # 滚轮滚动齿数
 
     # 根据动作类型设置数据包内容
     if action == -1:  # 鼠标左键按下
@@ -76,26 +106,25 @@ def mouse2command(action, x=0, y=0):
         wheel = 0x01
     elif action == -8:  # 滚轮向下
         wheel = 0xFF
+    else:  # 相对移动
+        # 将输入的x,y作为相对移动值，限制在-127~127范围内
+        x_rel = max(-127, min(127, x))
+        y_rel = max(-127, min(127, y))
 
-    # 将X轴和Y轴坐标值分解为低字节和高字节
-    x_low = x_axis & 0xFF
-    x_high = (x_axis >> 8) & 0xFF
-    y_low = y_axis & 0xFF
-    y_high = (y_axis >> 8) & 0xFF
-
-    # 构造7字节数据包
-    data_packet.append(button_value)  # 第2个字节：鼠标按键值
-    data_packet.append(x_low)         # 第3个字节：X轴低字节
-    data_packet.append(x_high)        # 第4个字节：X轴高字节
-    data_packet.append(y_low)         # 第5个字节：Y轴低字节
-    data_packet.append(y_high)        # 第6个字节：Y轴高字节
-    data_packet.append(wheel)         # 第7个字节：滚轮滚动齿数
+    # 构造5字节相对鼠标数据包
+    data_packet = [
+        0x01,               # 第1字节：固定为1
+        button_value,       # 第2字节：按键状态
+        x_rel & 0xFF,       # 第3字节：X轴相对移动 (有符号字节)
+        y_rel & 0xFF,       # 第4字节：Y轴相对移动 (有符号字节)
+        wheel               # 第5字节：滚轮相对移动
+    ]
 
     # 构造完整命令包
     header = [0x57, 0xAB]  # 帧头
     addr = 0x00            # 地址
-    cmd = 0x04             # 命令 (鼠标命令)
-    data_length = 0x07     # 数据长度 (固定7字节)
+    cmd = 0x05             # 命令 (鼠标相对命令)
+    data_length = 0x05     # 数据长度 (相对模式5字节)
 
     # 计算校验和：地址 + 命令 + 数据长度 + 所有数据字节的和
     checksum = (sum(header) + addr + cmd + data_length + sum(data_packet)) % 256
@@ -111,6 +140,8 @@ def mouse2command(action, x=0, y=0):
 
 # 使用示例
 if __name__ == "__main__":
+    # 键盘命令示例 (bytes2command)
+    print("=== 键盘命令测试 ===")
     # 示例1：发送3字节数据 [0x01, 0x02, 0x03]
     example_data = [0x04]
     command = bytes2command(example_data)
@@ -129,15 +160,32 @@ if __name__ == "__main__":
     print("生成命令:", command.hex(' ').upper())
     # 输出: 57 AB 00 82 01 FF 82
 
-    # 鼠标命令示例
+    # 鼠标命令示例 (mouse2command)
+    print("\n=== 鼠标命令测试 ===")
     mouse_command = mouse2command(-1)  # 左键按下
-    print("鼠标命令:", bytes(mouse_command).hex(' ').upper())
-    # 输出示例: 02 01 00 00 00 00 01
+    print("鼠标左键按下命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 57 AB 00 05 05 01 01 00 00 00 XX
+
+    mouse_command = mouse2command(-2)  # 左键弹起
+    print("鼠标左键弹起命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 57 AB 00 05 05 01 00 00 00 00 XX
+
+    mouse_command = mouse2command(0, -10, 0)  # 鼠标左移10像素
+    print("鼠标左移命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 57 AB 00 05 05 01 00 F6 00 00 XX
+
+    mouse_command = mouse2command(0, 10, 0)  # 鼠标右移10像素
+    print("鼠标右移命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 57 AB 00 05 05 01 00 0A 00 00 XX
 
     mouse_command = mouse2command(-7)  # 滚轮向上
-    print("鼠标命令:", bytes(mouse_command).hex(' ').upper())
-    # 输出示例: 02 00 00 00 00 00 01
+    print("鼠标滚轮向上命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 57 AB 00 05 05 01 00 00 00 01 XX
 
     mouse_command = mouse2command(-8)  # 滚轮向下
-    print("鼠标命令:", bytes(mouse_command).hex(' ').upper())
-    # 输出示例: 02 00 00 00 00 00 FF
+    print("鼠标滚轮向下命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 57 AB 00 05 05 01 00 00 00 FF XX
+
+    mouse_command = mouse2command(0, 10, -5)  # 相对移动：右移10像素，上移5像素
+    print("鼠标相对移动命令:", bytes(mouse_command).hex(' ').upper())
+    # 输出示例: 57 AB 00 05 05 01 00 0A FB 00 XX
