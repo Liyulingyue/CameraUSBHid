@@ -1,12 +1,6 @@
-openvino
 numpy
 opencv-python
-# fastdeploy-python
 PyYAML
-
-# GUI frameworks
-pyqt5
-gradio
 
 # Web-based real-time video streaming
 streamlit>=1.28.0

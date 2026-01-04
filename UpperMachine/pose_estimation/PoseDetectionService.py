@@ -1,6 +1,24 @@
 import time
+import yaml
+import os
 
-from UpperMachine.pose_estimation.ov.Estimator import HumanPoseEstimator
+# 动态导入 Estimator
+def load_estimator(backend, config):
+    if backend == "ov":
+        from UpperMachine.pose_estimation.ov.Estimator import HumanPoseEstimator
+        model_config = config['models']['ov']
+        return HumanPoseEstimator(model_config['model_path'], model_config['device'])
+    elif backend == "fastdeploy":
+        from UpperMachine.pose_estimation.fastdeploy.Estimator import HumanPoseEstimator
+        model_config = config['models']['fastdeploy']
+        return HumanPoseEstimator(model_config['model_path'], model_config['device'])
+    elif backend == "rdkx5":
+        from UpperMachine.pose_estimation.rdkx5.Estimator import HumanPoseEstimator
+        model_config = config['models']['rdkx5']
+        return HumanPoseEstimator(**model_config)
+    else:
+        raise ValueError(f"Unsupported backend: {backend}")
+
 from UpperMachine.pose_estimation.posedict2state_vector import posedict2state
 from UpperMachine.pose_estimation.state2bytes_vector import state2bytes, state2words
 from UpperMachine.pose_estimation.bytes2command import bytes2command, mouse2command
@@ -9,16 +27,19 @@ from UpperMachine.pose_estimation.sendcommand import send_command_timeout as sen
 class PoseDetectionService:
     """姿态检测服务"""
 
-    def __init__(self):
-        self.model_path = "Source/Models/human-pose-estimation-0001/FP32/human-pose-estimation-0001.xml"
-        self.device = "CPU"
-        self.estimator = HumanPoseEstimator(self.model_path, self.device)
+    def __init__(self, config_path="Source/flask_config.yml"):
+        # 加载配置文件
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+
+        backend = config['pose_backend']
+        self.estimator = load_estimator(backend, config)
 
         # 配置参数
-        self.confidence_threshold = 0.3
-        self.send_commands_enabled = False
-        self.fps_limit = 30
-        self.target_ip = '192.168.2.121'  # 目标设备IP地址
+        self.confidence_threshold = config.get('confidence_threshold', 0.3)
+        self.send_commands_enabled = config.get('send_commands_enabled', False)
+        self.fps_limit = config.get('fps_limit', 30)
+        self.target_ip = config.get('target_ip', '192.168.2.121')
 
         # 状态变量
         self.is_running = False
@@ -43,25 +64,39 @@ class PoseDetectionService:
     def process_frame(self, frame):
         """处理单帧图像"""
         try:
-            start_time = time.time()
+            process_start = time.time()
+            print(f"[PROCESS] 开始处理帧")
 
             # 姿态检测
+            infer_start = time.time()
             poses, processed_frame = self.estimator.infer(frame, is_draw=True)
+            infer_end = time.time()
+            print(f"[PROCESS] 推理时间: {(infer_end - infer_start)*1000:.2f} ms")
 
             state_name = None
             words_list = []
 
             if poses is not None and len(poses) > 0:
                 # 转换为字典格式
+                dict_start = time.time()
                 pose_dict = self.estimator.pose2dict(poses)
+                dict_end = time.time()
+                print(f"[PROCESS] 字典转换时间: {(dict_end - dict_start)*1000:.2f} ms")
 
                 # 转换为状态
+                state_start = time.time()
                 state_dicts = posedict2state(pose_dict)
+                state_end = time.time()
+                print(f"[PROCESS] 状态转换时间: {(state_end - state_start)*1000:.2f} ms")
+                
                 state = [s['index'] for s in state_dicts]  # 仅保留索引
                 state_name = [s['name'] for s in state_dicts]  # 仅保留名称
                 
                 # 计算对应的按键
+                words_start = time.time()
                 words_list = state2words(state) or []
+                words_end = time.time()
+                print(f"[PROCESS] 按键计算时间: {(words_end - words_start)*1000:.2f} ms")
                 
                 self.current_state = state
                 self.current_poses = pose_dict
@@ -77,6 +112,11 @@ class PoseDetectionService:
 
             # 计算FPS
             self._update_fps()
+            
+            process_end = time.time()
+            print(f"[PROCESS] 总处理时间: {(process_end - process_start)*1000:.2f} ms")
+            
+            return processed_frame, state_name, poses, words_list
 
             return processed_frame, state_name, poses, words_list
 

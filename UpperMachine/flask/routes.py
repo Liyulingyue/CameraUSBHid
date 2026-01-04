@@ -142,30 +142,39 @@ def register_routes(app, socketio):
         
         try:
             while pose_service.is_running:
-                start_time = time.time()
+                frame_start = time.time()
                 
                 ret, frame = cap.read()
                 if not ret:
                     print("无法读取摄像头画面")
                     break
                 
+                read_time = time.time()
+                print(f"[CAMERA] 读取帧时间: {(read_time - frame_start)*1000:.2f} ms")
+                
                 # 水平翻转画面（镜像）
                 frame = cv2.flip(frame, 1)
                 
                 # 处理帧
+                process_start = time.time()
                 processed_frame, state, poses, words_list = pose_service.process_frame(frame)
+                process_end = time.time()
+                print(f"[CAMERA] 处理帧时间: {(process_end - process_start)*1000:.2f} ms")
                 
                 # 安全检查processed_frame
                 if processed_frame is None:
                     processed_frame = frame
                 
                 # 编码图像为base64
+                encode_start = time.time()
                 try:
                     _, buffer = cv2.imencode('.jpg', processed_frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
                     frame_base64 = base64.b64encode(buffer).decode('utf-8')
                 except Exception as e:
                     print(f"图像编码错误: {e}")
                     continue
+                encode_end = time.time()
+                print(f"[CAMERA] 编码时间: {(encode_end - encode_start)*1000:.2f} ms")
                 
                 # 安全计算poses数量
                 poses_count = 0
@@ -176,6 +185,7 @@ def register_routes(app, socketio):
                         poses_count = poses.shape[0] if hasattr(poses, 'shape') else 0
                 
                 # 发送数据到客户端
+                send_start = time.time()
                 try:
                     socketio.emit('frame_update', {
                         'image': frame_base64,
@@ -186,9 +196,14 @@ def register_routes(app, socketio):
                     })
                 except Exception as e:
                     print(f"数据发送错误: {e}")
+                send_end = time.time()
+                print(f"[CAMERA] 发送时间: {(send_end - send_start)*1000:.2f} ms")
+                
+                total_time = time.time() - frame_start
+                print(f"[CAMERA] 总帧时间: {total_time*1000:.2f} ms, FPS: {1.0/total_time:.2f}")
                 
                 # 控制帧率
-                elapsed = time.time() - start_time
+                elapsed = time.time() - frame_start
                 if elapsed < frame_time:
                     time.sleep(frame_time - elapsed)
         

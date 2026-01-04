@@ -1,0 +1,23 @@
+# Flask 应用配置文件
+# 姿态检测后端配置
+pose_backend: "rdkx5"  # 可选: "ov", "fastdeploy", "rdkx5"
+
+# 模型路径配置
+models:
+  ov:
+    model_path: "Source/Models/human-pose-estimation-0001/FP32/human-pose-estimation-0001.xml"
+    device: "CPU"
+  fastdeploy:
+    model_path: "Source/Models/tinypose_128x96"
+    device: "CPU"
+  rdkx5:
+    model_path: "Source/Models/yolo11s_pose_bayese_640x640_nv12.bin"
+    score_thres: 0.25
+    nms_thres: 0.7
+    kpt_conf_thres: 0.5
+
+# 其他配置
+confidence_threshold: 0.3
+send_commands_enabled: false
+fps_limit: 30
+target_ip: '192.168.2.121'
