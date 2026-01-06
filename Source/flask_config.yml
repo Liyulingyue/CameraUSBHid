@@ -2,6 +2,15 @@
 # 姿态检测后端配置
 pose_backend: "rdkx5"  # 可选: "ov", "fastdeploy", "rdkx5"
 
+# 摄像头配置
+camera:
+  type: "rdkx5_imx219"  # 可选: "rdkx5_imx219", "usb"
+  width: 640
+  height: 480
+  sensor_width: 1920
+  sensor_height: 1080
+  device_id: 0  # USB摄像头设备ID
+
 # 模型路径配置
 models:
   ov:

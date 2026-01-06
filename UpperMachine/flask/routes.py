@@ -89,6 +89,12 @@ def register_routes(app, socketio):
     def handle_start_camera():
         """启动摄像头"""
         if not pose_service.is_running:
+            if not pose_service.camera.is_opened:
+                try:
+                    pose_service.camera.open()
+                except Exception as e:
+                    socketio.emit('error', {'message': f'无法打开摄像头: {e}'})
+                    return
             pose_service.is_running = True
             threading.Thread(target=camera_thread, daemon=True).start()
             emit('status', {'message': '摄像头已启动'})
@@ -97,6 +103,7 @@ def register_routes(app, socketio):
     def handle_stop_camera():
         """停止摄像头"""
         pose_service.is_running = False
+        # 不关闭摄像头，保持打开状态以便重启
         emit('status', {'message': '摄像头已停止'})
 
     @socketio.on('update_config')
@@ -127,43 +134,25 @@ def register_routes(app, socketio):
 
     def camera_thread():
         """摄像头处理线程"""
-        cap = cv2.VideoCapture(0)
-        
-        # 检查摄像头是否成功打开
-        if not cap.isOpened():
-            socketio.emit('error', {'message': '无法打开摄像头'})
-            return
-        
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        cap.set(cv2.CAP_PROP_FPS, pose_service.fps_limit)
-        
         frame_time = 1.0 / pose_service.fps_limit
         
         try:
             while pose_service.is_running:
                 frame_start = time.time()
                 
-                ret, frame = cap.read()
-                if not ret:
-                    print("无法读取摄像头画面")
-                    break
+                # 使用PoseDetectionService的摄像头捕获和处理
+                processed_frame, state, poses, words_list = pose_service.capture_and_process()
+                
+                if processed_frame is None:
+                    print("无法捕获或处理帧")
+                    time.sleep(0.1)
+                    continue
                 
                 read_time = time.time()
-                print(f"[CAMERA] 读取帧时间: {(read_time - frame_start)*1000:.2f} ms")
+                print(f"[CAMERA] 捕获和处理时间: {(read_time - frame_start)*1000:.2f} ms")
                 
                 # 水平翻转画面（镜像）
-                frame = cv2.flip(frame, 1)
-                
-                # 处理帧
-                process_start = time.time()
-                processed_frame, state, poses, words_list = pose_service.process_frame(frame)
-                process_end = time.time()
-                print(f"[CAMERA] 处理帧时间: {(process_end - process_start)*1000:.2f} ms")
-                
-                # 安全检查processed_frame
-                if processed_frame is None:
-                    processed_frame = frame
+                processed_frame = cv2.flip(processed_frame, 1)
                 
                 # 编码图像为base64
                 encode_start = time.time()
@@ -199,6 +188,11 @@ def register_routes(app, socketio):
                 send_end = time.time()
                 print(f"[CAMERA] 发送时间: {(send_end - send_start)*1000:.2f} ms")
                 
+                # 控制帧率
+                elapsed = time.time() - frame_start
+                if elapsed < frame_time:
+                    time.sleep(frame_time - elapsed)
+                
                 total_time = time.time() - frame_start
                 print(f"[CAMERA] 总帧时间: {total_time*1000:.2f} ms, FPS: {1.0/total_time:.2f}")
                 
@@ -212,7 +206,6 @@ def register_routes(app, socketio):
             socketio.emit('error', {'message': f'摄像头错误: {e}'})
         
         finally:
-            cap.release()
             pose_service.is_running = False
             socketio.emit('status', {'message': '摄像头已关闭'})
 

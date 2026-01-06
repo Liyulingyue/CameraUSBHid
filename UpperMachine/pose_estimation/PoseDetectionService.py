@@ -23,6 +23,7 @@ from UpperMachine.pose_estimation.posedict2state_vector import posedict2state
 from UpperMachine.pose_estimation.state2bytes_vector import state2bytes, state2words
 from UpperMachine.pose_estimation.bytes2command import bytes2command, mouse2command
 from UpperMachine.pose_estimation.sendcommand import send_command_timeout as send_command
+from UpperMachine.pose_estimation.cameras import create_camera
 
 class PoseDetectionService:
     """姿态检测服务"""
@@ -34,6 +35,23 @@ class PoseDetectionService:
 
         backend = config['pose_backend']
         self.estimator = load_estimator(backend, config)
+
+        # 摄像头配置
+        camera_config = config.get('camera', {})
+        camera_type = camera_config.get('type', 'rdkx5_imx219')
+        camera_kwargs = {
+            'width': camera_config.get('width', 640),
+            'height': camera_config.get('height', 480),
+            'sensor_width': camera_config.get('sensor_width', 1920),
+            'sensor_height': camera_config.get('sensor_height', 1080),
+            'device_id': camera_config.get('device_id', 0)
+        }
+        self.camera = create_camera(camera_type, **camera_kwargs)
+        try:
+            self.camera.open()
+        except Exception as e:
+            print(f"Warning: Failed to open camera during initialization: {e}")
+            self.camera.is_opened = False
 
         # 配置参数
         self.confidence_threshold = config.get('confidence_threshold', 0.3)
@@ -124,6 +142,15 @@ class PoseDetectionService:
             print(f"帧处理错误: {e}")
             return frame, None, None, None
 
+    def capture_and_process(self):
+        """捕获帧并处理"""
+        try:
+            frame = self.camera.capture()
+            return self.process_frame(frame)
+        except Exception as e:
+            print(f"捕获或处理错误: {e}")
+            return None, None, None, None
+
     def _send_command(self, state):
         """发送控制命令"""
         try:
@@ -181,9 +208,7 @@ class PoseDetectionService:
         """获取统计信息"""
         return self.stats.copy()
 
-    def get_recent_commands(self, count=10):
-        """获取最近的命令历史"""
-        return self.command_history[-count:] if self.command_history else []
-
-# 全局服务实例
-pose_service = PoseDetectionService()
+    def close(self):
+        """关闭服务"""
+        if hasattr(self, 'camera') and self.camera:
+            self.camera.close()
