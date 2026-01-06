@@ -1,6 +1,7 @@
 import time
 import yaml
 import os
+import threading
 
 # 动态导入 Estimator
 def load_estimator(backend, config):
@@ -58,15 +59,23 @@ class PoseDetectionService:
         self.send_commands_enabled = config.get('send_commands_enabled', False)
         self.fps_limit = config.get('fps_limit', 30)
         self.target_ip = config.get('target_ip', '192.168.2.121')
+        self.use_async = config.get('use_async', False) # 是否使用异步捕获（串行 vs 异步）
 
         # 状态变量
         self.is_running = False
+        self.frame_buffer = None  # 异步最新帧池
+        self.buffer_condition = threading.Condition() # 用于同步捕获与处理
+        self.capture_thread = None
+
         self.current_frame = None
         self.current_poses = None
         self.current_state = None
         self.fps_counter = 0
         self.last_fps_time = time.time()
-        self.last_sent_state = None  # 上次发送的姿势状态，避免重复发送相同命令
+        self.last_sent_state = None  # 上次发送的姿势状态
+
+        # 采样频率控制：不超过处理频率的3倍，确保数据新鲜
+        self.capture_interval = 1.0 / (max(1, self.fps_limit) * 3)
 
         # 统计信息
         self.stats = {
@@ -78,6 +87,70 @@ class PoseDetectionService:
 
         # 命令历史
         self.command_history = []
+
+    def _capture_loop(self):
+        """独立的摄像头捕获线程 (Producer)"""
+        print(f"[CAMERA] 异步捕获线程已启动，最高采样频率: {1.0/self.capture_interval:.1f} Hz")
+        while self.is_running:
+            loop_start = time.time()
+            try:
+                if self.camera.is_opened:
+                    frame = self.camera.capture()
+                    if frame is not None:
+                        with self.buffer_condition:
+                            self.frame_buffer = frame # 始终覆盖，池子只保留最新一张
+                            self.buffer_condition.notify_all() # 通知处理线程
+                else:
+                    time.sleep(0.5)
+            except Exception as e:
+                if "Failed to capture" not in str(e):
+                    print(f"[CAMERA] 捕获错误: {e}")
+                time.sleep(0.1)
+            
+            # 限制采样频率
+            elapsed = time.time() - loop_start
+            if elapsed < self.capture_interval:
+                time.sleep(self.capture_interval - elapsed)
+
+    def start(self):
+        """启动后台服务"""
+        if not self.is_running:
+            self.is_running = True
+            if self.use_async:
+                # 仅在异步模式下启动独立的捕获线程
+                self.capture_thread = threading.Thread(target=self._capture_loop, daemon=True)
+                self.capture_thread.start()
+            else:
+                print("[SERVICE] 当前处于串行模式 (Serial Mode)")
+
+    def capture_and_process(self):
+        """获取最新一帧并处理 (支持异步池或串行捕获)"""
+        try:
+            frame = None
+            
+            if self.use_async:
+                # 异步模式：从池子中取最新帧
+                with self.buffer_condition:
+                    # 如果没有新帧，则等待（满足“模型等待摄像头”的需求）
+                    while self.frame_buffer is None and self.is_running:
+                        if not self.buffer_condition.wait(timeout=1.0):
+                            return None, None, None, None
+                    
+                    if self.frame_buffer is not None:
+                        frame = self.frame_buffer.copy()
+                        self.frame_buffer = None # 取走后清空，确保下一波是新鲜的
+            else:
+                # 串行模式：直接实时捕获
+                if self.camera.is_opened:
+                    frame = self.camera.capture()
+            
+            if frame is None:
+                return None, None, None, None
+                
+            return self.process_frame(frame)
+        except Exception as e:
+            print(f"[PROCESS] 处理错误: {e}")
+            return None, None, None, None
 
     def process_frame(self, frame):
         """处理单帧图像"""
@@ -136,20 +209,9 @@ class PoseDetectionService:
             
             return processed_frame, state_name, poses, words_list
 
-            return processed_frame, state_name, poses, words_list
-
         except Exception as e:
             print(f"帧处理错误: {e}")
             return frame, None, None, None
-
-    def capture_and_process(self):
-        """捕获帧并处理"""
-        try:
-            frame = self.camera.capture()
-            return self.process_frame(frame)
-        except Exception as e:
-            print(f"捕获或处理错误: {e}")
-            return None, None, None, None
 
     def _send_command(self, state):
         """发送控制命令"""

@@ -26,6 +26,7 @@ models:
     kpt_conf_thres: 0.5
 
 # 其他配置
+use_async: false  # 默认使用串行模式，提升稳定性
 confidence_threshold: 0.3
 send_commands_enabled: false
 fps_limit: 30

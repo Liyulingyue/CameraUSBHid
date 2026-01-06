@@ -95,9 +95,11 @@ def register_routes(app, socketio):
                 except Exception as e:
                     socketio.emit('error', {'message': f'无法打开摄像头: {e}'})
                     return
-            pose_service.is_running = True
+            # 启动异步捕获和推理服务
+            pose_service.start()
+            # 启动Flask推送线程（推理是在此线程内触发的）
             threading.Thread(target=camera_thread, daemon=True).start()
-            emit('status', {'message': '摄像头已启动'})
+            emit('status', {'message': '摄像头及推理服务已启动'})
 
     @socketio.on('stop_camera')
     def handle_stop_camera():
@@ -133,81 +135,38 @@ def register_routes(app, socketio):
             emit('error', {'message': f'配置更新失败: {e}'})
 
     def camera_thread():
-        """摄像头处理线程"""
-        frame_time = 1.0 / pose_service.fps_limit
+        """视频流推送线程 (Consumer)"""
+        print("[FLASK] 视频推送线程启动")
         
-        try:
-            while pose_service.is_running:
-                frame_start = time.time()
-                
-                # 使用PoseDetectionService的摄像头捕获和处理
-                processed_frame, state, poses, words_list = pose_service.capture_and_process()
-                
-                if processed_frame is None:
-                    print("无法捕获或处理帧")
-                    time.sleep(0.1)
-                    continue
-                
-                read_time = time.time()
-                print(f"[CAMERA] 捕获和处理时间: {(read_time - frame_start)*1000:.2f} ms")
-                
-                # 水平翻转画面（镜像）
-                processed_frame = cv2.flip(processed_frame, 1)
-                
-                # 编码图像为base64
-                encode_start = time.time()
+        while pose_service.is_running:
+            # 模型作为消费者，主动获取并处理最新帧
+            # 若摄像头池子为空，此调用将阻塞等待
+            processed_frame, state_name, poses, words_list = pose_service.capture_and_process()
+            
+            if processed_frame is not None:
                 try:
-                    _, buffer = cv2.imencode('.jpg', processed_frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
-                    frame_base64 = base64.b64encode(buffer).decode('utf-8')
+                    # 编码为JPEG (镜像翻转可选)
+                    display_frame = cv2.flip(processed_frame, 1)
+                    ret, buffer = cv2.imencode('.jpg', display_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                    if ret:
+                        import base64
+                        frame_base64 = base64.b64encode(buffer).decode('utf-8')
+                        
+                        # 发送数据
+                        socketio.emit('frame_update', {
+                            'image': frame_base64,
+                            'state': state_name,
+                            'poses_count': len(poses) if poses is not None else 0,
+                            'instruction': words_list,
+                            'stats': pose_service.get_stats(),
+                            'fps': round(pose_service.stats['current_fps'], 1)
+                        })
                 except Exception as e:
-                    print(f"图像编码错误: {e}")
-                    continue
-                encode_end = time.time()
-                print(f"[CAMERA] 编码时间: {(encode_end - encode_start)*1000:.2f} ms")
-                
-                # 安全计算poses数量
-                poses_count = 0
-                if poses is not None:
-                    try:
-                        poses_count = len(poses)
-                    except:
-                        poses_count = poses.shape[0] if hasattr(poses, 'shape') else 0
-                
-                # 发送数据到客户端
-                send_start = time.time()
-                try:
-                    socketio.emit('frame_update', {
-                        'image': frame_base64,
-                        'state': state,
-                        'poses_count': poses_count,
-                        'instruction': words_list,
-                        'stats': pose_service.get_stats()
-                    })
-                except Exception as e:
-                    print(f"数据发送错误: {e}")
-                send_end = time.time()
-                print(f"[CAMERA] 发送时间: {(send_end - send_start)*1000:.2f} ms")
-                
-                # 控制帧率
-                elapsed = time.time() - frame_start
-                if elapsed < frame_time:
-                    time.sleep(frame_time - elapsed)
-                
-                total_time = time.time() - frame_start
-                print(f"[CAMERA] 总帧时间: {total_time*1000:.2f} ms, FPS: {1.0/total_time:.2f}")
-                
-                # 控制帧率
-                elapsed = time.time() - frame_start
-                if elapsed < frame_time:
-                    time.sleep(frame_time - elapsed)
-        
-        except Exception as e:
-            print(f"摄像头线程错误: {e}")
-            socketio.emit('error', {'message': f'摄像头错误: {e}'})
-        
-        finally:
-            pose_service.is_running = False
-            socketio.emit('status', {'message': '摄像头已关闭'})
+                    print(f"[FLASK] 推送循环异常: {e}")
+            else:
+                time.sleep(0.01)
+
+        print("[FLASK] 视频推送线程停止")
 
     # 调试工具路由
     @app.route('/api/send_mouse', methods=['POST'])
