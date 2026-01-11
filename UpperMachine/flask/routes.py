@@ -1,20 +1,29 @@
-from flask import render_template, jsonify, request
+from flask import render_template, jsonify, request, send_from_directory
 from flask_socketio import emit
 import cv2
 import base64
 import json
 import threading
 import time
+import traceback
 from queue import Queue
 import numpy as np
+import os
 
 from UpperMachine.pose_estimation.PoseDetectionService import PoseDetectionService
+from UpperMachine.pose_estimation.sendcommand import send_command_timeout as send_command
+from UpperMachine.pose_estimation.bytes2command import bytes2command, mouse2command
+from UpperMachine.pose_estimation.state2bytes_vector import words2bytes
 from UpperMachine.utils import convert_numpy_to_list
 
 # 创建服务实例
 pose_service = PoseDetectionService()
 
 def register_routes(app, socketio):
+    # 提供Source目录下的静态文件访问
+    @app.route('/Source/<path:filename>')
+    def serve_source_files(filename):
+        return send_from_directory('Source', filename)
     # 下面的 HTML 页面路由已由 React 前端接管
     # @app.route('/')
     # def index():
@@ -204,7 +213,6 @@ def register_routes(app, socketio):
                     display_frame = cv2.flip(processed_frame, 1)
                     ret, buffer = cv2.imencode('.jpg', display_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
                     if ret:
-                        import base64
                         frame_base64 = base64.b64encode(buffer).decode('utf-8')
                         
                         # 发送数据
@@ -234,9 +242,6 @@ def register_routes(app, socketio):
         print(f"[DEBUG] send_mouse called with url={url}, port={port}, words={words}")
         
         try:
-            from UpperMachine.pose_estimation.sendcommand import send_command_timeout as send_command
-            from UpperMachine.pose_estimation.bytes2command import bytes2command, mouse2command
-            from UpperMachine.pose_estimation.state2bytes_vector import words2bytes
             
             if words == 'left_click':
                 print("[DEBUG] Sending left click: press and release")
@@ -403,7 +408,6 @@ def register_routes(app, socketio):
             return jsonify({'success': True, 'keypoints': results})
         except Exception as e:
             print(f"批量检测关键点出错: {str(e)}")
-            import traceback
             traceback.print_exc()
             return jsonify({'success': False, 'message': str(e)})
 
@@ -587,7 +591,6 @@ def register_routes(app, socketio):
                 
         except Exception as e:
             print(f"渲染关键点出错: {str(e)}")
-            import traceback
             traceback.print_exc()
             return jsonify({'success': False, 'message': str(e)})
 
@@ -611,4 +614,59 @@ def register_routes(app, socketio):
         except Exception as e:
             print(f"HID复位错误: {str(e)}")
             return jsonify({'status': 'error', 'message': str(e)})
+
+    @app.route('/api/pose_configs')
+    def get_pose_configs():
+        """获取姿态配置列表"""
+        try:
+            
+            config_path = "Source/configs.json"
+            if not os.path.exists(config_path):
+                return jsonify([])
+            
+            with open(config_path, 'r', encoding='utf-8') as f:
+                configs = json.load(f)
+            
+            return jsonify(configs)
+        except Exception as e:
+            print(f"获取姿态配置失败: {str(e)}")
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/update_pose_keys', methods=['POST'])
+    def update_pose_keys():
+        """更新姿态的按键映射"""
+        try:
+            data = request.get_json()
+            pose_name = data.get('name')
+            keys = data.get('keys', [])
+            
+            if not pose_name:
+                return jsonify({'status': 'error', 'message': '缺少姿态名称'}), 400
+            
+            config_path = "Source/configs.json"
+            if not os.path.exists(config_path):
+                return jsonify({'status': 'error', 'message': '配置文件不存在'}), 404
+            
+            with open(config_path, 'r', encoding='utf-8') as f:
+                configs = json.load(f)
+            
+            # 找到对应的姿态配置并更新按键
+            updated = False
+            for config in configs:
+                if config['name'] == pose_name:
+                    config['keys'] = keys
+                    updated = True
+                    break
+            
+            if not updated:
+                return jsonify({'status': 'error', 'message': '未找到指定的姿态配置'}), 404
+            
+            # 保存更新后的配置
+            with open(config_path, 'w', encoding='utf-8') as f:
+                json.dump(configs, f, indent=4, ensure_ascii=False)
+            
+            return jsonify({'status': 'success', 'message': '按键配置已更新'})
+        except Exception as e:
+            print(f"更新姿态按键失败: {str(e)}")
+            return jsonify({'status': 'error', 'message': str(e)}), 500
 

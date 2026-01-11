@@ -3,6 +3,9 @@ import { io, Socket } from 'socket.io-client';
 import axios from 'axios';
 import { Toaster, toast } from 'react-hot-toast';
 
+// 设置axios默认配置
+axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL || '';
+
 // Components & Pages
 import Sidebar from './components/Sidebar';
 import Home from './pages/Home';
@@ -10,6 +13,7 @@ import Dashboard from './pages/Dashboard';
 import MouseControl from './pages/MouseControl';
 import PoseRecorder from './pages/PoseRecorder';
 import KeyDebug from './pages/KeyDebug';
+import PoseConfig from './pages/PoseConfig';
 
 // 基础配置
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
@@ -31,7 +35,7 @@ export interface Config {
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'home' | 'realtime' | 'mouse' | 'recorder' | 'keydebug'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'realtime' | 'mouse' | 'recorder' | 'keydebug' | 'poseconfig'>('home');
   const [stats, setStats] = useState<Stats>({ fps: 0, detections: 0, inference_time: 0, is_running: false, current_fps: 0 });
   const [config, setConfig] = useState<Config>({ 
     confidence_threshold: 0.5, 
@@ -48,8 +52,9 @@ function App() {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    // 初始化 Socket.IO
-    socketRef.current = io(BACKEND_URL);
+    // 初始化 Socket.IO - 使用相对路径让Vite代理处理
+    const socketUrl = BACKEND_URL || window.location.origin;
+    socketRef.current = io(socketUrl);
 
     socketRef.current.on('connect', () => {
       toast.success('已连接至后端服务');
@@ -94,7 +99,7 @@ function App() {
 
   const fetchConfig = async () => {
     try {
-      const res = await axios.get(`${BACKEND_URL}/api/config`);
+      const res = await axios.get('/api/config');
       setConfig(res.data);
     } catch (e) {
       console.error('获取配置失败', e);
@@ -103,7 +108,7 @@ function App() {
 
   const fetchStats = async () => {
     try {
-      const res = await axios.get(`${BACKEND_URL}/api/stats`);
+      const res = await axios.get('/api/stats');
       setStats(prev => ({ ...prev, ...res.data }));
     } catch (e) {
       // 忽略失败
@@ -112,7 +117,7 @@ function App() {
 
   const updateConfig = async (newConfig: Partial<Config>) => {
     try {
-      const res = await axios.post(`${BACKEND_URL}/api/config`, newConfig);
+      const res = await axios.post('/api/config', newConfig);
       if (res.status === 200) {
         setConfig(prev => ({ ...prev, ...newConfig }));
         toast.success('设置已更新');
@@ -155,6 +160,8 @@ function App() {
         {activeTab === 'recorder' && <PoseRecorder />}
 
         {activeTab === 'keydebug' && <KeyDebug />}
+
+        {activeTab === 'poseconfig' && <PoseConfig />}
       </main>
     </div>
   );

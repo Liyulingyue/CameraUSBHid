@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, Activity, MousePointer2, History, Zap } from 'lucide-react';
+import { Camera, Activity, MousePointer2, History, Zap, Settings } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: string;
@@ -14,6 +14,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, fps, latency
     { id: 'mouse', label: '远程控制', icon: MousePointer2 },
     { id: 'recorder', label: '姿态录制', icon: History },
     { id: 'keydebug', label: '按键调试', icon: Zap },
+    { id: 'poseconfig', label: '姿态配置', icon: Settings },
   ];
 
   return (
