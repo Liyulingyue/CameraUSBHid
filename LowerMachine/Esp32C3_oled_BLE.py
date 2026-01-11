@@ -99,6 +99,7 @@ def ble_irq(event, data):  # 蓝牙中断函数
 
 def connect_to_ble():
     ble.active(True)  # 打开BLE
+    ble.config(mtu=128)  # 增加MTU到128字节，防止长字符串截断
     adv_mode = bytearray(b'\x02\x01\x06')  # 正常蓝牙模式, ad struct 1
 
     name = BLE_NAME.encode()  # 编码成utf-8格式
@@ -107,7 +108,8 @@ def connect_to_ble():
 
     UART_UUID = bluetooth.UUID('6E400001-B5A3-F393-E0A9-E50E24DCCA9E')
     UART_TX = (bluetooth.UUID('6E400003-B5A3-F393-E0A9-E50E24DCCA9E'), bluetooth.FLAG_READ | bluetooth.FLAG_NOTIFY,)
-    UART_RX = (bluetooth.UUID('6E400002-B5A3-F393-E0A9-E50E24DCCA9E'), bluetooth.FLAG_WRITE,)
+    # 增加缓冲区大小到 100 字节
+    UART_RX = (bluetooth.UUID('6E400002-B5A3-F393-E0A9-E50E24DCCA9E'), bluetooth.FLAG_WRITE, 100)
     UART_SERVICE = (UART_UUID, (UART_TX, UART_RX,),)
     SERVICES = (UART_SERVICE,)
     ((tx, rx,),) = ble.gatts_register_services(SERVICES)
