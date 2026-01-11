@@ -15,25 +15,26 @@ from UpperMachine.utils import convert_numpy_to_list
 pose_service = PoseDetectionService()
 
 def register_routes(app, socketio):
-    @app.route('/')
-    def index():
-        """主页面"""
-        return render_template('index.html')
+    # 下面的 HTML 页面路由已由 React 前端接管
+    # @app.route('/')
+    # def index():
+    #     """主页面"""
+    #     return render_template('index.html')
 
-    @app.route('/realtime')
-    def realtime():
-        """实时检测页面"""
-        return render_template('realtime.html')
+    # @app.route('/realtime')
+    # def realtime():
+    #     """实时检测页面"""
+    #     return render_template('realtime.html')
 
-    @app.route('/mouse_control')
-    def mouse_control():
-        """鼠标远程控制页面"""
-        return render_template('mouse_control.html')
+    # @app.route('/mouse_control')
+    # def mouse_control():
+    #     """鼠标远程控制页面"""
+    #     return render_template('mouse_control.html')
 
-    @app.route('/pose_recorder')
-    def pose_recorder():
-        """姿势录制与配置页面"""
-        return render_template('pose_recorder.html')
+    # @app.route('/pose_recorder')
+    # def pose_recorder():
+    #     """姿势录制与配置页面"""
+    #     return render_template('pose_recorder.html')
 
     @app.route('/api/config', methods=['GET', 'POST'])
     def config():
