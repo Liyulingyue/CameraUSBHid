@@ -57,6 +57,8 @@ class PoseDetectionService:
         # 配置参数
         self.confidence_threshold = config.get('confidence_threshold', 0.3)
         self.send_commands_enabled = config.get('send_commands_enabled', False)
+        # 检测开关：默认关闭
+        self.detection_enabled = config.get('detection_enabled', False)
         self.fps_limit = config.get('fps_limit', 30)
         self.target_ip = config.get('target_ip', '192.168.2.121')
         self.use_async = config.get('use_async', False) # 是否使用异步捕获（串行 vs 异步）
@@ -256,6 +258,41 @@ class PoseDetectionService:
             print(f"命令发送错误: {e}")
             return None
 
+    def send_stop_command(self):
+        """发送停止命令（全0键盘命令）以停止HID输出"""
+        try:
+            # 发送全0键盘命令
+            command = bytes2command([])  # 空列表会生成全0命令
+            result = send_command(server_ip=self.target_ip, command=command, timeout=1.0)
+            
+            # 记录命令历史
+            command_info = {
+                'command': 'stop_command: keyboard all zeros',
+                'result': result,
+                'timestamp': time.time(),
+                'state': 'stop'
+            }
+
+            self.command_history.append(command_info)
+            if len(self.command_history) > 100:
+                self.command_history.pop(0)
+
+            print("[SERVICE] 已发送停止命令")
+            return command_info
+
+        except Exception as e:
+            print(f"停止命令发送错误: {e}")
+            return None
+
+    def stop(self):
+        """停止检测并发送停止命令"""
+        # 停止循环但不关闭摄像头，以便可以快速恢复
+        self.is_running = False
+        try:
+            self.send_stop_command()
+        except Exception as e:
+            print(f"停止检测时发送停止命令失败: {e}")
+
     def _update_fps(self):
         """更新FPS计算"""
         self.fps_counter += 1
@@ -268,7 +305,9 @@ class PoseDetectionService:
 
     def get_stats(self):
         """获取统计信息"""
-        return self.stats.copy()
+        stats = self.stats.copy()
+        stats['is_running'] = self.is_running
+        return stats
 
     def close(self):
         """关闭服务"""

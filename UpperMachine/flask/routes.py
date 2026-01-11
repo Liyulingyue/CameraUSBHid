@@ -46,13 +46,40 @@ def register_routes(app, socketio):
                 pose_service.confidence_threshold = float(data['confidence_threshold'])
             
             if 'send_commands_enabled' in data:
-                pose_service.send_commands_enabled = bool(data['send_commands_enabled'])
+                prev = pose_service.send_commands_enabled
+                new_val = bool(data['send_commands_enabled'])
+                # 当从开启 -> 关闭时，发送一次全0停止命令，避免HID持续输出重复字符
+                if prev and not new_val:
+                    pose_service.send_stop_command()
+                # 当从关闭 -> 开启时，清除上次状态以确保首次状态会被发送
+                if not prev and new_val:
+                    pose_service.last_sent_state = None
+                pose_service.send_commands_enabled = new_val
             
             if 'fps_limit' in data:
                 pose_service.fps_limit = int(data['fps_limit'])
             
             if 'target_ip' in data:
                 pose_service.target_ip = str(data['target_ip'])
+
+            if 'detection_enabled' in data:
+                prev = getattr(pose_service, 'detection_enabled', False)
+                new_val = bool(data['detection_enabled'])
+                # 从开启 -> 关闭：停止检测并发送全0停止命令，避免设备持续输出
+                if prev and not new_val:
+                    pose_service.stop()
+                # 从关闭 -> 开启：尝试打开摄像头并启动处理线程
+                if not prev and new_val:
+                    if not pose_service.camera.is_opened:
+                        try:
+                            pose_service.camera.open()
+                        except Exception as e:
+                            return jsonify({'status': 'error', 'message': f'无法打开摄像头: {e}'}), 500
+                    # 清除上次发送状态以确保首次状态会被发送
+                    pose_service.last_sent_state = None
+                    pose_service.start()
+                    threading.Thread(target=camera_thread, daemon=True).start()
+                pose_service.detection_enabled = new_val
             
             return jsonify({'status': 'success'})
         
@@ -60,6 +87,7 @@ def register_routes(app, socketio):
             return jsonify({
                 'confidence_threshold': pose_service.confidence_threshold,
                 'send_commands_enabled': pose_service.send_commands_enabled,
+                'detection_enabled': getattr(pose_service, 'detection_enabled', False),
                 'fps_limit': pose_service.fps_limit,
                 'target_ip': pose_service.target_ip
             })
@@ -117,19 +145,45 @@ def register_routes(app, socketio):
                 pose_service.confidence_threshold = float(data['confidence_threshold'])
             
             if 'send_commands_enabled' in data:
-                pose_service.send_commands_enabled = bool(data['send_commands_enabled'])
+                prev = pose_service.send_commands_enabled
+                new_val = bool(data['send_commands_enabled'])
+                # 从开启 -> 关闭时发送停止命令
+                if prev and not new_val:
+                    pose_service.send_stop_command()
+                # 从关闭 -> 开启时清除上次状态
+                if not prev and new_val:
+                    pose_service.last_sent_state = None
+                pose_service.send_commands_enabled = new_val
             
             if 'fps_limit' in data:
                 pose_service.fps_limit = int(data['fps_limit'])
             
             if 'target_ip' in data:
                 pose_service.target_ip = str(data['target_ip'])
+
+            if 'detection_enabled' in data:
+                prev = getattr(pose_service, 'detection_enabled', False)
+                new_val = bool(data['detection_enabled'])
+                if prev and not new_val:
+                    pose_service.stop()
+                if not prev and new_val:
+                    if not pose_service.camera.is_opened:
+                        try:
+                            pose_service.camera.open()
+                        except Exception as e:
+                            emit('error', {'message': f'无法打开摄像头: {e}'})
+                            return
+                    pose_service.last_sent_state = None
+                    pose_service.start()
+                    threading.Thread(target=camera_thread, daemon=True).start()
+                pose_service.detection_enabled = new_val
             
             emit('config_updated', {
                 'confidence_threshold': pose_service.confidence_threshold,
                 'send_commands_enabled': pose_service.send_commands_enabled,
                 'fps_limit': pose_service.fps_limit,
-                'target_ip': pose_service.target_ip
+                'target_ip': pose_service.target_ip,
+                'detection_enabled': pose_service.detection_enabled
             })
             
         except Exception as e:
@@ -536,4 +590,25 @@ def register_routes(app, socketio):
             import traceback
             traceback.print_exc()
             return jsonify({'success': False, 'message': str(e)})
+
+    @app.route('/api/reset_hid', methods=['POST'])
+    def reset_hid():
+        """复位HID输出（发送全0命令停止所有按键）"""
+        try:
+            data = request.get_json()
+            url = data.get('url', '192.168.2.121')
+            port = data.get('port', 80)
+            
+            # 发送停止命令
+            pose_service.target_ip = url  # 临时设置目标IP
+            result = pose_service.send_stop_command()
+            
+            if result:
+                return jsonify({'status': 'success', 'message': 'HID复位成功'})
+            else:
+                return jsonify({'status': 'error', 'message': 'HID复位失败'})
+                
+        except Exception as e:
+            print(f"HID复位错误: {str(e)}")
+            return jsonify({'status': 'error', 'message': str(e)})
 

@@ -19,3 +19,6 @@ pandas
 flask>=2.3.0
 flask-socketio>=5.3.0
 python-socketio>=5.8.0
+uvicorn
+python-socketio
+python-multipart
