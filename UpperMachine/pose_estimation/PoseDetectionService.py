@@ -2,6 +2,8 @@ import time
 import yaml
 import os
 import threading
+import math
+import numpy as np
 
 # 动态导入 Estimator
 def load_estimator(backend, config):
@@ -48,6 +50,23 @@ class PoseDetectionService:
             'device_id': camera_config.get('device_id', 0)
         }
         self.camera = create_camera(camera_type, **camera_kwargs)
+        
+        # 视场角校正配置 (针对 120° 广角镜头进行比例缩放)
+        self.view_angle = camera_config.get('view_angle', 72)
+        self.target_angle = camera_config.get('target_angle', 72)
+        self.width = camera_kwargs['width']
+        self.height = camera_kwargs['height']
+        
+        if self.view_angle != self.target_angle:
+            # 计算缩放比例: tan(view/2) / tan(target/2)
+            # 广角转窄角需要放大坐标以匹配参考比例
+            k_view = math.tan(math.radians(self.view_angle / 2))
+            k_target = math.tan(math.radians(self.target_angle / 2))
+            self.fov_scale = k_view / k_target
+            print(f"[SERVICE] FOV 校正启动: {self.view_angle}° -> {self.target_angle}°, 缩放倍率: {self.fov_scale:.2f}")
+        else:
+            self.fov_scale = 1.0
+
         try:
             self.camera.open()
         except Exception as e:
@@ -173,8 +192,22 @@ class PoseDetectionService:
                 # 转换为字典格式
                 dict_start = time.time()
                 pose_dict = self.estimator.pose2dict(poses)
+                
+                # FOV 缩放校正：仅针对宽度方向进行放缩
+                # 针对板卡广角摄像头在水平方向的拉伸形变进行校正
+                if self.fov_scale != 1.0:
+                    cx = self.width / 2
+                    for key in pose_dict:
+                        px, py = pose_dict[key]
+                        # 仅对有效点进行缩放
+                        if px != 0 or py != 0:
+                            pose_dict[key] = np.array([
+                                cx + (px - cx) * self.fov_scale,
+                                py
+                            ], dtype=np.float32)
+
                 dict_end = time.time()
-                print(f"[PROCESS] 字典转换时间: {(dict_end - dict_start)*1000:.2f} ms")
+                print(f"[PROCESS] 字典转换与单向校正时间: {(dict_end - dict_start)*1000:.2f} ms")
 
                 # 转换为状态
                 state_start = time.time()

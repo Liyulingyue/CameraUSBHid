@@ -1,4 +1,5 @@
 import json
+from UpperMachine.utils import get_latest_config_path
 
 words2bytes_dict = {
     # 字母键 (a-z) - USB HID 键盘扫描码
@@ -48,7 +49,7 @@ words2bytes_dict = {
     "mouse_release": -11,        # 鼠标释放（所有按键）
 }
 
-with open("Source/configs.json", "r", encoding="utf-8") as f:
+with open(get_latest_config_path(), "r", encoding="utf-8") as f:
     configs_data = json.load(f)
     mapper_list = [{"action": [pose["index"]], "keys": pose["keys"]} for pose in configs_data]
 

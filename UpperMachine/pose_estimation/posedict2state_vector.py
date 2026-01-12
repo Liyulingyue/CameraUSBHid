@@ -1,7 +1,9 @@
 import numpy as np
 import json
 
-config_list = json.load(open("Source/configs.json"))
+from UpperMachine.utils import get_latest_config_path
+
+config_list = json.load(open(get_latest_config_path()))
 
 # 计算余弦相似度
 def calculate_cosine_similarity(v1, v2):

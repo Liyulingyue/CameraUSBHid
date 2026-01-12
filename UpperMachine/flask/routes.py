@@ -10,6 +10,7 @@ from queue import Queue
 import numpy as np
 import os
 
+from UpperMachine.utils import get_latest_config_path
 from UpperMachine.pose_estimation.PoseDetectionService import PoseDetectionService
 from UpperMachine.pose_estimation.sendcommand import send_command_timeout as send_command
 from UpperMachine.pose_estimation.bytes2command import bytes2command, mouse2command
@@ -436,7 +437,7 @@ def register_routes(app, socketio):
             data['pose_img'] = pose_img
             
             # 读取现有配置
-            with open('Source/configs.json', 'r', encoding='utf-8') as f:
+            with open(get_latest_config_path(), 'r', encoding='utf-8') as f:
                 configs = json.load(f)
             
             # 检查是否已存在相同索引的姿势
@@ -459,11 +460,20 @@ def register_routes(app, socketio):
             # 按索引排序
             configs.sort(key=lambda x: x['index'])
             
+            # 生成带时间戳的文件名
+            from datetime import datetime
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            backup_path = f"Source/configs_{timestamp}.json"
+            
+            # 保存备份
+            with open(backup_path, 'w', encoding='utf-8') as f:
+                json.dump(configs, f, indent=4, ensure_ascii=False)
+            
             # 保存配置
             with open('Source/configs.json', 'w', encoding='utf-8') as f:
                 json.dump(configs, f, indent=4, ensure_ascii=False)
             
-            return jsonify({'success': True, 'message': '姿势保存成功'})
+            return jsonify({'success': True, 'message': f'姿势保存成功，已备份到 {backup_path}'})
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)})
 
@@ -478,7 +488,7 @@ def register_routes(app, socketio):
             target_index = data['index']
 
             # 读取现有配置
-            with open('Source/configs.json', 'r', encoding='utf-8') as f:
+            with open(get_latest_config_path(), 'r', encoding='utf-8') as f:
                 configs = json.load(f)
 
             # 查找并删除
@@ -489,10 +499,20 @@ def register_routes(app, socketio):
 
             # 保存更新后的配置
             new_configs.sort(key=lambda x: x['index'])
+            
+            # 生成带时间戳的文件名
+            from datetime import datetime
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            backup_path = f"Source/configs_{timestamp}.json"
+            
+            # 保存备份
+            with open(backup_path, 'w', encoding='utf-8') as f:
+                json.dump(configs, f, indent=4, ensure_ascii=False)
+            
             with open('Source/configs.json', 'w', encoding='utf-8') as f:
                 json.dump(new_configs, f, indent=4, ensure_ascii=False)
 
-            return jsonify({'success': True, 'message': '删除成功'})
+            return jsonify({'success': True, 'message': f'删除成功，已备份到 {backup_path}'})
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)})
 
@@ -500,7 +520,7 @@ def register_routes(app, socketio):
     def get_poses():
         """获取所有姿势"""
         try:
-            with open('Source/configs.json', 'r', encoding='utf-8') as f:
+            with open(get_latest_config_path(), 'r', encoding='utf-8') as f:
                 configs = json.load(f)
             return jsonify(configs)
         except Exception as e:
@@ -510,7 +530,7 @@ def register_routes(app, socketio):
     def get_pose(pose_index):
         """获取特定姿势"""
         try:
-            with open('Source/configs.json', 'r', encoding='utf-8') as f:
+            with open(get_latest_config_path(), 'r', encoding='utf-8') as f:
                 configs = json.load(f)
             
             for pose in configs:
@@ -526,7 +546,7 @@ def register_routes(app, socketio):
         """删除姿势"""
         try:
             # 读取现有配置
-            with open('Source/configs.json', 'r', encoding='utf-8') as f:
+            with open(get_latest_config_path(), 'r', encoding='utf-8') as f:
                 configs = json.load(f)
             
             # 找到并删除姿势
@@ -535,11 +555,20 @@ def register_routes(app, socketio):
             if len(new_configs) == len(configs):
                 return jsonify({'success': False, 'message': '姿势不存在'})
             
-            # 保存配置
+            # 生成带时间戳的文件名
+            from datetime import datetime
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            backup_path = f"Source/configs_{timestamp}.json"
+            
+            # 保存备份
+            with open(backup_path, 'w', encoding='utf-8') as f:
+                json.dump(configs, f, indent=4, ensure_ascii=False)
+            
+            # 保存更新后的配置
             with open('Source/configs.json', 'w', encoding='utf-8') as f:
                 json.dump(new_configs, f, indent=4, ensure_ascii=False)
             
-            return jsonify({'success': True, 'message': '姿势删除成功'})
+            return jsonify({'success': True, 'message': f'姿势删除成功，已备份到 {backup_path}'})
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)})
 
@@ -620,7 +649,7 @@ def register_routes(app, socketio):
         """获取姿态配置列表"""
         try:
             
-            config_path = "Source/configs.json"
+            config_path = get_latest_config_path()
             if not os.path.exists(config_path):
                 return jsonify([])
             
@@ -643,7 +672,7 @@ def register_routes(app, socketio):
             if not pose_name:
                 return jsonify({'status': 'error', 'message': '缺少姿态名称'}), 400
             
-            config_path = "Source/configs.json"
+            config_path = get_latest_config_path()
             if not os.path.exists(config_path):
                 return jsonify({'status': 'error', 'message': '配置文件不存在'}), 404
             
@@ -661,11 +690,20 @@ def register_routes(app, socketio):
             if not updated:
                 return jsonify({'status': 'error', 'message': '未找到指定的姿态配置'}), 404
             
-            # 保存更新后的配置
+            # 生成带时间戳的文件名
+            from datetime import datetime
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            backup_path = f"Source/configs_{timestamp}.json"
+            
+            # 保存到新文件（备份当前配置）
+            with open(backup_path, 'w', encoding='utf-8') as f:
+                json.dump(configs, f, indent=4, ensure_ascii=False)
+            
+            # 同时更新主配置文件
             with open(config_path, 'w', encoding='utf-8') as f:
                 json.dump(configs, f, indent=4, ensure_ascii=False)
             
-            return jsonify({'status': 'success', 'message': '按键配置已更新'})
+            return jsonify({'status': 'success', 'message': f'按键配置已更新，已备份到 {backup_path}'})
         except Exception as e:
             print(f"更新姿态按键失败: {str(e)}")
             return jsonify({'status': 'error', 'message': str(e)}), 500

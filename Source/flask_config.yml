@@ -10,6 +10,8 @@ camera:
   sensor_width: 1920
   sensor_height: 1080
   device_id: 0  # USB摄像头设备ID
+  view_angle: 120 # 相机广角角度
+  target_angle: 72 # 目标参考角度 (用于纠正形变)
 
 # 模型路径配置
 models:
@@ -20,7 +22,7 @@ models:
     model_path: "Source/Models/tinypose_128x96"
     device: "CPU"
   rdkx5:
-    model_path: "Source/Models/yolo11s_pose_bayese_640x640_nv12.bin"
+    model_path: "Source/Models/yolo11m_pose_bayese_640x640_nv12.bin"
     score_thres: 0.25
     nms_thres: 0.7
     kpt_conf_thres: 0.5

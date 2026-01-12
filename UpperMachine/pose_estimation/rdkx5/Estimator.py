@@ -290,6 +290,10 @@ class Ultralytics_YOLO_Pose_Bayese_YUV420SP():
 
         kpts_conf = kpts_conf[indices]
 
+        # 由于输入图像被翻转，翻转 x 坐标以纠正
+        # bboxes[:, [0, 2]] = self.img_w - bboxes[:, [0, 2]]
+        # kpts_xy[:, :, 0] = self.img_w - kpts_xy[:, :, 0]
+
         results = []
         for i in range(len(bboxes)):
             x1, y1, x2, y2 = bboxes[i]
@@ -335,6 +339,9 @@ class HumanPoseEstimator():
         """
         if self.model is None:
             self.load()
+
+        # 翻转图像以纠正左右手检测问题
+        # image = cv2.flip(image, 1)
 
         # 准备输入数据
         input_tensor = self.model.preprocess_yuv420sp(image)
