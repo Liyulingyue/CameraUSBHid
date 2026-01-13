@@ -10,8 +10,7 @@ camera:
   sensor_width: 1920
   sensor_height: 1080
   device_id: 0  # USB摄像头设备ID
-  view_angle: 120 # 相机广角角度
-  target_angle: 72 # 目标参考角度 (用于纠正形变)
+  camera_type: "120width_camera" # 相机类型: 72camera 或 120width_camera
 
 # 模型路径配置
 models:

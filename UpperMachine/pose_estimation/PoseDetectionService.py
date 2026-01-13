@@ -51,21 +51,12 @@ class PoseDetectionService:
         }
         self.camera = create_camera(camera_type, **camera_kwargs)
         
-        # 视场角校正配置 (针对 120° 广角镜头进行比例缩放)
-        self.view_angle = camera_config.get('view_angle', 72)
-        self.target_angle = camera_config.get('target_angle', 72)
+        # 摄像头视场角类型 (72camera 或 120width_camera)
+        self.camera_type_fov = camera_config.get('camera_type', '72camera')
         self.width = camera_kwargs['width']
         self.height = camera_kwargs['height']
         
-        if self.view_angle != self.target_angle:
-            # 计算缩放比例: tan(view/2) / tan(target/2)
-            # 广角转窄角需要放大坐标以匹配参考比例
-            k_view = math.tan(math.radians(self.view_angle / 2))
-            k_target = math.tan(math.radians(self.target_angle / 2))
-            self.fov_scale = k_view / k_target
-            print(f"[SERVICE] FOV 校正启动: {self.view_angle}° -> {self.target_angle}°, 缩放倍率: {self.fov_scale:.2f}")
-        else:
-            self.fov_scale = 1.0
+        print(f"[SERVICE] 当前摄像头 FOV 类型: {self.camera_type_fov}")
 
         try:
             self.camera.open()
@@ -98,13 +89,15 @@ class PoseDetectionService:
         # 采样频率控制：不超过处理频率的3倍，确保数据新鲜
         self.capture_interval = 1.0 / (max(1, self.fps_limit) * 3)
 
-        # 统计信息
         self.stats = {
             'frames_processed': 0,
             'poses_detected': 0,
             'commands_sent': 0,
             'current_fps': 0
         }
+
+        # 最新原始关键点（用于前端重录）
+        self.last_raw_keypoints = None
 
         # 命令历史
         self.command_history = []
@@ -193,25 +186,30 @@ class PoseDetectionService:
                 dict_start = time.time()
                 pose_dict = self.estimator.pose2dict(poses)
                 
-                # FOV 缩放校正：仅针对宽度方向进行放缩
-                # 针对板卡广角摄像头在水平方向的拉伸形变进行校正
-                if self.fov_scale != 1.0:
-                    cx = self.width / 2
-                    for key in pose_dict:
-                        px, py = pose_dict[key]
-                        # 仅对有效点进行缩放
-                        if px != 0 or py != 0:
-                            pose_dict[key] = np.array([
-                                cx + (px - cx) * self.fov_scale,
-                                py
-                            ], dtype=np.float32)
+                # 处理镜像产生的左右互换逻辑
+                # 虽然显示画面为了直观进行了翻转，但模型是在原始镜像画面上进行推理的
+                # 这会导致物理右手被识别为 left_wrist。在此进行逻辑层面的交换。
+                swap_list = [
+                    ('left_eye', 'right_eye'), ('left_ear', 'right_ear'),
+                    ('left_shoulder', 'right_shoulder'), ('left_elbow', 'right_elbow'),
+                    ('left_wrist', 'right_wrist'), ('left_hip', 'right_hip'),
+                    ('left_knee', 'right_knee'), ('left_ankle', 'right_ankle')
+                ]
+                for left_key, right_key in swap_list:
+                    if left_key in pose_dict and right_key in pose_dict:
+                        # 交换坐标值
+                        pose_dict[left_key], pose_dict[right_key] = pose_dict[right_key], pose_dict[left_key]
+                
+                # 更新全局最新的原始关键点记录 (针对交换后的正确逻辑)
+                serialized_keypoints = {k: [float(x) for x in v] for k, v in pose_dict.items()}
+                self.last_raw_keypoints = serialized_keypoints
 
                 dict_end = time.time()
-                print(f"[PROCESS] 字典转换与单向校正时间: {(dict_end - dict_start)*1000:.2f} ms")
+                print(f"[PROCESS] 字典转换时间: {(dict_end - dict_start)*1000:.2f} ms")
 
                 # 转换为状态
                 state_start = time.time()
-                state_dicts = posedict2state(pose_dict)
+                state_dicts = posedict2state(pose_dict, current_camera=self.camera_type_fov)
                 state_end = time.time()
                 print(f"[PROCESS] 状态转换时间: {(state_end - state_start)*1000:.2f} ms")
                 

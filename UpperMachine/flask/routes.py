@@ -72,6 +72,9 @@ def register_routes(app, socketio):
             if 'target_ip' in data:
                 pose_service.target_ip = str(data['target_ip'])
 
+            if 'camera_type' in data:
+                pose_service.camera_type_fov = str(data['camera_type'])
+
             if 'detection_enabled' in data:
                 prev = getattr(pose_service, 'detection_enabled', False)
                 new_val = bool(data['detection_enabled'])
@@ -99,13 +102,18 @@ def register_routes(app, socketio):
                 'send_commands_enabled': pose_service.send_commands_enabled,
                 'detection_enabled': getattr(pose_service, 'detection_enabled', False),
                 'fps_limit': pose_service.fps_limit,
-                'target_ip': pose_service.target_ip
+                'target_ip': pose_service.target_ip,
+                'camera_type': getattr(pose_service, 'camera_type_fov', '72camera')
             })
-
     @app.route('/api/stats')
     def stats():
         """统计信息API"""
         return jsonify(pose_service.get_stats())
+
+    @app.route('/api/latest_keypoints')
+    def latest_keypoints():
+        """提供给前端重录使用的最新原始关键点"""
+        return jsonify(pose_service.last_raw_keypoints)
 
     @app.route('/api/commands')
     def commands():
@@ -171,6 +179,9 @@ def register_routes(app, socketio):
             if 'target_ip' in data:
                 pose_service.target_ip = str(data['target_ip'])
 
+            if 'camera_type' in data:
+                pose_service.camera_type_fov = str(data['camera_type'])
+
             if 'detection_enabled' in data:
                 prev = getattr(pose_service, 'detection_enabled', False)
                 new_val = bool(data['detection_enabled'])
@@ -193,7 +204,8 @@ def register_routes(app, socketio):
                 'send_commands_enabled': pose_service.send_commands_enabled,
                 'fps_limit': pose_service.fps_limit,
                 'target_ip': pose_service.target_ip,
-                'detection_enabled': pose_service.detection_enabled
+                'detection_enabled': pose_service.detection_enabled,
+                'camera_type': getattr(pose_service, 'camera_type_fov', '72camera')
             })
             
         except Exception as e:
@@ -223,7 +235,8 @@ def register_routes(app, socketio):
                             'poses_count': len(poses) if poses is not None else 0,
                             'instruction': words_list,
                             'stats': pose_service.get_stats(),
-                            'fps': round(pose_service.stats['current_fps'], 1)
+                            'fps': round(pose_service.stats['current_fps'], 1),
+                            'person_detected': len(poses) > 0 if poses is not None else False
                         })
                 except Exception as e:
                     print(f"[FLASK] 推送循环异常: {e}")

@@ -1,9 +1,13 @@
 import numpy as np
 import json
+import math
 
 from UpperMachine.utils import get_latest_config_path
 
 config_list = json.load(open(get_latest_config_path()))
+
+# FOV 缩放常量：tan(120/2) / tan(72/2)
+FOV_SCALE_120_72 = math.tan(math.radians(120 / 2)) / math.tan(math.radians(72 / 2))
 
 # 计算余弦相似度
 def calculate_cosine_similarity(v1, v2):
@@ -24,7 +28,7 @@ def calculate_cosine_similarity(v1, v2):
     return cosine_similarity
 
 
-def posedict2state(keypoints):
+def posedict2state(keypoints, current_camera="72camera"):
     states = []
 
     for pose_template in config_list:
@@ -35,13 +39,30 @@ def posedict2state(keypoints):
         pose_index = pose_template["index"]
         pose_list = pose_template["list_corekeypoints"]
         pose_value_dict = pose_template["value_dict"]
+        
+        # 动作录制时的相机类型，默认为 72camera
+        recorded_camera = pose_template.get("camera_type", "72camera")
 
         base_coordinates = keypoints[pose_base]
         v_template = []
         v_keypoints = []
+        
+        # 确定当前的缩放比例
+        scale_x = 1.0
+        if current_camera != recorded_camera:
+            if current_camera == "120width_camera" and recorded_camera == "72camera":
+                scale_x = FOV_SCALE_120_72
+            elif current_camera == "72camera" and recorded_camera == "120width_camera":
+                scale_x = 1.0 / FOV_SCALE_120_72
+
         for key in pose_list:
             v_template.extend(pose_value_dict[key])
             core_coordinates = keypoints[key] - base_coordinates
+            
+            # 仅在相机类型不一致时进行横向偏移缩放
+            if scale_x != 1.0:
+                core_coordinates[0] *= scale_x
+                
             v_keypoints.extend(core_coordinates.tolist())
 
         # 计算向量夹角

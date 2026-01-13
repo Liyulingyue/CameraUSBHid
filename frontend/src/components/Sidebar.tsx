@@ -11,7 +11,6 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, fps, latency }) => {
   const menuItems = [
     { id: 'realtime', label: '采集与监测', icon: Activity },
-    { id: 'mouse', label: '远程控制', icon: MousePointer2 },
     { id: 'recorder', label: '姿态录制', icon: History },
     { id: 'keydebug', label: '按键调试', icon: Zap },
     { id: 'poseconfig', label: '姿态配置', icon: Settings },

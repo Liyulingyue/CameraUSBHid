@@ -10,7 +10,6 @@ axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL || '';
 import Sidebar from './components/Sidebar';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
-import MouseControl from './pages/MouseControl';
 import PoseRecorder from './pages/PoseRecorder';
 import KeyDebug from './pages/KeyDebug';
 import PoseConfig from './pages/PoseConfig';
@@ -35,7 +34,7 @@ export interface Config {
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'home' | 'realtime' | 'mouse' | 'recorder' | 'keydebug' | 'poseconfig'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'realtime' | 'recorder' | 'keydebug' | 'poseconfig'>('home');
   const [stats, setStats] = useState<Stats>({ fps: 0, detections: 0, inference_time: 0, is_running: false, current_fps: 0 });
   const [config, setConfig] = useState<Config>({ 
     confidence_threshold: 0.5, 
@@ -48,6 +47,7 @@ function App() {
   const [imageSrc, setImageSrc] = useState<string>('');
   const [currentInstruction, setCurrentInstruction] = useState<string[]>([]);
   const [currentActions, setCurrentActions] = useState<string[]>([]);
+  const [personDetected, setPersonDetected] = useState<boolean>(false);
   
   const socketRef = useRef<Socket | null>(null);
 
@@ -69,6 +69,7 @@ function App() {
       }
       setCurrentInstruction(data.instruction || []);
       setCurrentActions(data.state || []);
+      setPersonDetected(!!data.person_detected);
     });
 
     socketRef.current.on('stats', (data: Stats) => {
@@ -154,14 +155,18 @@ function App() {
             setConfig={setConfig}
           />
         )}
-
-        {activeTab === 'mouse' && <MouseControl />}
         
         {activeTab === 'recorder' && <PoseRecorder />}
 
         {activeTab === 'keydebug' && <KeyDebug />}
 
-        {activeTab === 'poseconfig' && <PoseConfig />}
+        {activeTab === 'poseconfig' && (
+          <PoseConfig 
+            imageSrc={imageSrc} 
+            personDetected={personDetected}
+            isCameraRunning={stats.is_running}
+          />
+        )}
       </main>
     </div>
   );

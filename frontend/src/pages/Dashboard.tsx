@@ -68,6 +68,18 @@ const Dashboard: React.FC<DashboardProps> = ({
                     className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-2">当前摄像头类型</label>
+                  <select
+                    value={config.camera_type || '72camera'}
+                    onChange={(e) => updateConfig({ camera_type: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="72camera">72° 相机 (72camera)</option>
+                    <option value="120width_camera">120° 横向畸变相机 (120width_camera)</option>
+                  </select>
+                </div>
               </div>
 
               <div className="pt-4 border-t border-slate-800">
