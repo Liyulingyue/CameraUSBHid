@@ -33,3 +33,5 @@ confidence_threshold: 0.3
 send_commands_enabled: false
 fps_limit: 30
 target_ip: '192.168.2.121'
+hot_reload: false
+mouse_step_size: 30

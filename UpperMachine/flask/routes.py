@@ -516,16 +516,17 @@ def register_routes(app, socketio):
             # 生成带时间戳的文件名
             from datetime import datetime
             timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-            backup_path = f"Source/configs_{timestamp}.json"
+            new_config_path = f"Source/configs_{timestamp}.json"
             
-            # 保存备份
-            with open(backup_path, 'w', encoding='utf-8') as f:
-                json.dump(configs, f, indent=4, ensure_ascii=False)
+            # 保存到新文件
+            with open(new_config_path, 'w', encoding='utf-8') as f:
+                json.dump(new_configs, f, indent=4, ensure_ascii=False)
             
+            # 同时更新 configs.json 以防万一
             with open('Source/configs.json', 'w', encoding='utf-8') as f:
                 json.dump(new_configs, f, indent=4, ensure_ascii=False)
 
-            return jsonify({'success': True, 'message': f'删除成功，已备份到 {backup_path}'})
+            return jsonify({'success': True, 'message': f'删除成功，已由于生成新配置 {new_config_path}'})
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)})
 

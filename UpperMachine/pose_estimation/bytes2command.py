@@ -36,6 +36,60 @@ def bytes2command(data_list):
 
     return packet
 
+def combine_mouse_actions(mouse_actions, x_ext=0, y_ext=0, step_size=10):
+    """
+    将多个鼠标动作合并为一个 HID 数据包报文。
+    
+    参数:
+        mouse_actions (list): 动作代码列表 (例如 [-1, -9])
+        x_ext, y_ext: 额外的位移量
+        step_size: 移动步长，默认为 10
+    """
+    button_value = 0x00
+    x_rel = x_ext
+    y_rel = y_ext
+    wheel = 0x00
+
+    for action in mouse_actions:
+        if action == -1:    # 鼠标左键按下
+            button_value |= 0x01
+        elif action == -3:  # 鼠标右键按下
+            button_value |= 0x02
+        elif action == -5:  # 鼠标中键按下
+            button_value |= 0x04
+        elif action == -7:  # 滚轮向上
+            wheel = 0x01
+        elif action == -8:  # 滚轮向下
+            wheel = 0xFF
+        elif action == -9:  # 鼠标左移
+            x_rel -= step_size
+        elif action == -10: # 鼠标右移
+            x_rel += step_size
+        elif action == -11: # 鼠标释放（清空按键）
+            button_value = 0x00
+
+    # 构造 5 字节相对鼠标数据包
+    data_packet = [
+        0x01,               # 第 1 字节：固定为 1 (相对模式)
+        button_value,       # 第 2 字节：按键状态
+        x_rel & 0xFF,       # 第 3 字节：X 轴相对移动
+        y_rel & 0xFF,       # 第 4 字节：Y 轴相对移动
+        wheel               # 第 5 字节：滚轮相对移动
+    ]
+
+    # 构造完整命令包
+    header = [0x57, 0xAB]
+    addr = 0x00
+    cmd = 0x05
+    data_length = 0x05
+    checksum = (sum(header) + addr + cmd + data_length + sum(data_packet)) % 256
+
+    packet = (bytes(header) + 
+              bytes([addr, cmd, data_length]) + 
+              bytes(data_packet) + 
+              bytes([checksum]))
+    return packet
+
 
 def mouse2command(action, x=0, y=0):
     """

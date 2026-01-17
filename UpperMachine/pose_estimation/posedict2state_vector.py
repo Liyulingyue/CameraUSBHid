@@ -1,10 +1,48 @@
 import numpy as np
 import json
 import math
+import os
+import yaml
 
 from UpperMachine.utils import get_latest_config_path
 
-config_list = json.load(open(get_latest_config_path()))
+# 获取热重载配置
+def _load_hot_reload_setting():
+    try:
+        with open("Source/flask_config.yml", 'r') as f:
+            config = yaml.safe_load(f)
+            return config.get('hot_reload', False)
+    except:
+        return False
+
+HOT_RELOAD_ENABLED = _load_hot_reload_setting()
+
+# 缓存配置
+_config_cache = {
+    "list": [],
+    "mtime": 0,
+    "path": ""
+}
+
+def _get_configs():
+    path = get_latest_config_path()
+    
+    # 如果没启用热重载且已经加载过配置，直接返回缓存
+    if not HOT_RELOAD_ENABLED and _config_cache["list"] and path == _config_cache["path"]:
+        return _config_cache["list"]
+
+    try:
+        mtime = os.path.getmtime(path)
+        if path != _config_cache["path"] or mtime > _config_cache["mtime"]:
+            with open(path, 'r', encoding='utf-8') as f:
+                _config_cache["list"] = json.load(f)
+            _config_cache["mtime"] = mtime
+            _config_cache["path"] = path
+    except Exception as e:
+        print(f"Error loading config: {e}")
+        if not _config_cache["list"]:
+            return []
+    return _config_cache["list"]
 
 # FOV 缩放常量：tan(120/2) / tan(72/2)
 FOV_SCALE_120_72 = math.tan(math.radians(120 / 2)) / math.tan(math.radians(72 / 2))
@@ -30,9 +68,12 @@ def calculate_cosine_similarity(v1, v2):
 
 def posedict2state(keypoints, current_camera="72camera"):
     states = []
+    config_list = _get_configs()
 
     for pose_template in config_list:
         if pose_template.get("inner_flag", False):
+            continue
+        if not pose_template.get("enable", True):
             continue
         pose_name = pose_template["name"]
         pose_base = pose_template["basekeypoints"]
@@ -73,9 +114,9 @@ def posedict2state(keypoints, current_camera="72camera"):
             states.append({'index': pose_index, 'name': pose_name})
 
 
-    # 硬代码检测弯腰动作（仅当LeftLean且RightLean的inner_flag为True时激活）
-    has_left_lean = any(p.get("name") == "LeftLean" and p.get("inner_flag", False) for p in config_list)
-    has_right_lean = any(p.get("name") == "RightLean" and p.get("inner_flag", False) for p in config_list)
+    # 硬代码检测弯腰动作（仅当LeftLean且RightLean的inner_flag为True且启用时激活）
+    has_left_lean = any(p.get("name") == "LeftLean" and p.get("inner_flag", False) and p.get("enable", True) for p in config_list)
+    has_right_lean = any(p.get("name") == "RightLean" and p.get("inner_flag", False) and p.get("enable", True) for p in config_list)
     
     if has_left_lean and has_right_lean:
         mid_shoulder = (keypoints['left_shoulder'] + keypoints['right_shoulder']) / 2
@@ -85,15 +126,15 @@ def posedict2state(keypoints, current_camera="72camera"):
         # 计算相对于垂直线的倾斜角度
         vertical_angle = -90  # 垂直向下
         tilt_angle = abs(angle - vertical_angle)
-        if tilt_angle > 10:  # 如果倾斜角度大于10度，认为是弯腰
-            if vec[0] < 0 and has_left_lean:
-                states.append({'index': 13, 'name': 'LeftLean'})
-            elif vec[0] > 0 and has_right_lean:
+        if tilt_angle > 10:  # 如果倾斜角度大于10度，认为是倾斜/弯腰
+            if vec[0] < 0 and has_right_lean:
                 states.append({'index': 14, 'name': 'RightLean'})
+            elif vec[0] > 0 and has_left_lean:
+                states.append({'index': 13, 'name': 'LeftLean'})
 
     # 检测转身动作（LeftTurn和RightTurn）
-    has_left_turn = any(p.get("name") == "LeftTurn" and p.get("inner_flag", False) for p in config_list)
-    has_right_turn = any(p.get("name") == "RightTurn" and p.get("inner_flag", False) for p in config_list)
+    has_left_turn = any(p.get("name") == "LeftTurn" and p.get("inner_flag", False) and p.get("enable", True) for p in config_list)
+    has_right_turn = any(p.get("name") == "RightTurn" and p.get("inner_flag", False) and p.get("enable", True) for p in config_list)
     
     if has_left_turn or has_right_turn:
         try:

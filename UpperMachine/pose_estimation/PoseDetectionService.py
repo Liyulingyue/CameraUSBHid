@@ -24,7 +24,7 @@ def load_estimator(backend, config):
 
 from UpperMachine.pose_estimation.posedict2state_vector import posedict2state
 from UpperMachine.pose_estimation.state2bytes_vector import state2bytes, state2words
-from UpperMachine.pose_estimation.bytes2command import bytes2command, mouse2command
+from UpperMachine.pose_estimation.bytes2command import bytes2command, mouse2command, combine_mouse_actions
 from UpperMachine.pose_estimation.sendcommand import send_command_timeout as send_command
 from UpperMachine.pose_estimation.cameras import create_camera
 
@@ -71,6 +71,7 @@ class PoseDetectionService:
         self.detection_enabled = config.get('detection_enabled', False)
         self.fps_limit = config.get('fps_limit', 30)
         self.target_ip = config.get('target_ip', '192.168.2.121')
+        self.mouse_step_size = config.get('mouse_step_size', 10)
         self.use_async = config.get('use_async', False) # 是否使用异步捕获（串行 vs 异步）
 
         # 状态变量
@@ -249,24 +250,36 @@ class PoseDetectionService:
     def _send_command(self, state):
         """发送控制命令"""
         try:
-            # 检查是否与上次发送的状态相同，避免重复发送
-            if self.last_sent_state == state:
-                return  # 相同状态，不重复发送
-
-            # 转换状态为字节
+            # 1. 转换状态为字节和动作
             keyboard_bytes, mouse_actions = state2bytes(state)
 
-            # 发送键盘命令（如果有键盘操作）
-            if keyboard_bytes:
+            # 2. 识别是否包含瞬时动作（位移或滚轮）
+            # -7, -8: 滚轮; -9, -10: 左右移动
+            has_transient_mouse = any(a in [-7, -8, -9, -10] for a in mouse_actions)
+
+            # 3. 基础过滤：如果状态未变且没有瞬时动作，由于 HID 指令具有持久化特性，无需重复发送
+            if self.last_sent_state == state and not has_transient_mouse:
+                return
+
+            # 4. 处理键盘指令：仅在键盘按键列表变化时发送
+            current_kb = sorted(keyboard_bytes)
+            last_kb = sorted(getattr(self, 'last_kb_sent', []))
+            if current_kb != last_kb:
                 command = bytes2command(keyboard_bytes)
-                result = send_command(server_ip=self.target_ip, command=command, timeout=1.0)
+                send_command(server_ip=self.target_ip, command=command, timeout=1.0)
+                self.last_kb_sent = keyboard_bytes
 
-            # 发送鼠标命令
-            for mouse_action in mouse_actions:
-                command = mouse2command(mouse_action)
-                result = send_command(server_ip=self.target_ip, command=command, timeout=1.0)
+            # 5. 处理鼠标指令：将所有鼠标动作合并为一个报文发送
+            # 如果包含移动动作，需要强制发送（ignore_cache=True）以实现连续移动效果
+            mouse_command = combine_mouse_actions(mouse_actions, step_size=self.mouse_step_size)
+            result = send_command(
+                server_ip=self.target_ip, 
+                command=mouse_command, 
+                timeout=1.0,
+                ignore_cache=has_transient_mouse
+            )
 
-            # 更新上次发送状态
+            # 更新状态记录
             self.last_sent_state = state
 
             # 记录命令历史

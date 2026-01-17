@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, Eye, Edit3, Save, X, Key, Activity, Clock, Plus } from 'lucide-react';
+import { Settings, Eye, Edit3, Save, X, Key, Activity, Clock, Plus, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -7,6 +7,7 @@ interface PoseConfig {
   name: string;
   index: number;
   inner_flag: boolean;
+  enable?: boolean;
   similarity_threshold: number;
   camera_type: string;
   keys: string[];
@@ -359,6 +360,7 @@ const PoseConfig: React.FC<PoseConfigProps> = ({ imageSrc, personDetected, isCam
       name: `新姿态模板_${newIndex}`,
       index: newIndex,
       inner_flag: false,
+      enable: true,
       similarity_threshold: 0.8,
       camera_type: '72camera',
       keys: [],
@@ -439,6 +441,28 @@ const PoseConfig: React.FC<PoseConfigProps> = ({ imageSrc, personDetected, isCam
   const handleCancelEdit = () => {
     setEditingPose(null);
     setEditingKeys([]);
+  };
+
+  const handleDeletePose = async (pose: PoseConfig) => {
+    if (!window.confirm(`确定要删除姿态 "${pose.name}" 吗？`)) return;
+
+    try {
+      const response = await axios.post('/api/delete_pose', { index: pose.index });
+      if (response.data.success) {
+        toast.success('删除成功');
+        setPoseConfigs(prev => prev.filter(p => p.index !== pose.index));
+        if (selectedPose?.index === pose.index) {
+          setSelectedPose(null);
+        }
+        if (editingPose?.index === pose.index) {
+          setEditingPose(null);
+        }
+      } else {
+        toast.error(response.data.message || '删除失败');
+      }
+    } catch (error) {
+      toast.error('删除请求失败');
+    }
   };
 
   const addKey = () => {
@@ -569,7 +593,14 @@ const PoseConfig: React.FC<PoseConfigProps> = ({ imageSrc, personDetected, isCam
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="font-medium text-white">{pose.name}</h4>
+                      <div className="flex items-center space-x-2">
+                        <h4 className="font-medium text-white">{pose.name}</h4>
+                        {pose.enable === false && (
+                          <span className="px-1.5 py-0.5 bg-rose-500/20 border border-rose-500/30 rounded text-[10px] font-bold text-rose-400">
+                            禁用
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-slate-400 mt-1">
                         基准点: {pose.basekeypoints}
                       </p>
@@ -586,6 +617,16 @@ const PoseConfig: React.FC<PoseConfigProps> = ({ imageSrc, personDetected, isCam
                         className="p-1 text-slate-400 hover:text-indigo-400 transition-colors"
                       >
                         <Edit3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePose(pose);
+                        }}
+                        className="p-1 text-slate-400 hover:text-rose-400 transition-colors"
+                        title="删除姿态"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -653,6 +694,12 @@ const PoseConfig: React.FC<PoseConfigProps> = ({ imageSrc, personDetected, isCam
                       <div className="flex justify-between">
                         <span className="text-slate-400">相似度阈值:</span>
                         <span className="text-white font-mono">{selectedPose.similarity_threshold}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">启用状态:</span>
+                        <span className={`font-mono ${(selectedPose.enable !== false) ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {(selectedPose.enable !== false) ? '已启用' : '已禁用'}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-400">相机类型:</span>
@@ -765,6 +812,24 @@ const PoseConfig: React.FC<PoseConfigProps> = ({ imageSrc, personDetected, isCam
                           onChange={(e) => setEditingPose({ ...editingPose, similarity_threshold: parseFloat(e.target.value) })}
                           className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
                         />
+                      </div>
+                      <div className="flex items-center space-x-3 h-full pt-6">
+                        <label className="text-sm font-medium text-slate-400">是否启用</label>
+                        <button
+                          onClick={() => setEditingPose({ ...editingPose, enable: !editingPose.hasOwnProperty('enable') ? false : !editingPose.enable })}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                            (editingPose.enable !== false) ? 'bg-indigo-600' : 'bg-slate-700'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              (editingPose.enable !== false) ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                        <span className="text-xs text-slate-500">
+                          {(editingPose.enable !== false) ? '启用' : '禁用'}
+                        </span>
                       </div>
                     </div>
 

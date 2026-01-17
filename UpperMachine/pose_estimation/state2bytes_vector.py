@@ -49,12 +49,51 @@ words2bytes_dict = {
     "mouse_release": -11,        # 鼠标释放（所有按键）
 }
 
-with open(get_latest_config_path(), "r", encoding="utf-8") as f:
-    configs_data = json.load(f)
-    mapper_list = [{"action": [pose["index"]], "keys": pose["keys"]} for pose in configs_data]
+import os
+import yaml
+
+# 获取热重载配置
+def _load_hot_reload_setting():
+    try:
+        with open("Source/flask_config.yml", 'r') as f:
+            config = yaml.safe_load(f)
+            return config.get('hot_reload', False)
+    except:
+        return False
+
+HOT_RELOAD_ENABLED = _load_hot_reload_setting()
+
+# 缓存配置映射
+_mapper_cache = {
+    "list": [],
+    "mtime": 0,
+    "path": ""
+}
+
+def _get_mapper_list():
+    path = get_latest_config_path()
+
+    # 如果没启用热重载且已经加载过配置，直接返回缓存
+    if not HOT_RELOAD_ENABLED and _mapper_cache["list"] and path == _mapper_cache["path"]:
+        return _mapper_cache["list"]
+
+    try:
+        mtime = os.path.getmtime(path)
+        if path != _mapper_cache["path"] or mtime > _mapper_cache["mtime"]:
+            with open(path, "r", encoding="utf-8") as f:
+                configs_data = json.load(f)
+                _mapper_cache["list"] = [{"action": [pose["index"]], "keys": pose["keys"]} for pose in configs_data]
+            _mapper_cache["mtime"] = mtime
+            _mapper_cache["path"] = path
+    except Exception as e:
+        print(f"Error loading mapper config: {e}")
+        if not _mapper_cache["list"]:
+            return []
+    return _mapper_cache["list"]
 
 def state2words(state):
     words_list = []
+    mapper_list = _get_mapper_list()
     for i in range(len(mapper_list)):
         action_list = mapper_list[i]["action"]
         keys_list = mapper_list[i]["keys"]
