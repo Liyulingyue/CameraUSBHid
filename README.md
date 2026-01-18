@@ -84,6 +84,9 @@ pip install -r requirements.txt
 3. 将 下位机硬件 接入被控设备中，打开 记事本，运行 main.pyqt.py, 你将在电脑上看到画面，在画面中做出叉腰、摸头的动作，电脑上的记事本会打印对应的字符。
 4. 打开游戏（例如愿神），运行 main.pyqt.py, 游戏角色将会随着你的动作进行移动。
 
+### 部署与自启动
+如果您在 RDK X5 或其他 Linux 设备上部署，可以使用 systemd 配置服务自启动，详见：[Docs/rdkx5自启服务配置.md](Docs/rdkx5自启服务配置.md)
+
 ### 动作与配置
 当前支持检测的动作可以参考 Source/configs.json，每种动作对应的姿态可以参考 Source/Images，姿态与键盘输入的对应关系参考 Tools/state2bytes_vector.py。
 

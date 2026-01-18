@@ -90,3 +90,10 @@ sudo systemctl disable hostapd dnsmasq
 *   **查看连接设备**：`iw dev wlx90de80d368b3 station dump`
 *   **查看服务状态**：`systemctl status rdk-ap.service`
 *   **检查进程**：`ps aux | grep -E "hostapd|dnsmasq"`
+
+## 7. 应用程序自启动配置
+如果您需要前后端应用也随系统启动，请参考 [rdkx5自启服务配置.md](rdkx5自启服务配置.md)。
+
+已配置的服务：
+*   `camerahid-backend.service`: 后端 Flask 服务 (端口 5000)
+*   `camerahid-frontend.service`: 前端 Vite 服务 (端口 5173)
